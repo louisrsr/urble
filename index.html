@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urble - Daily Urban Slang</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-theme">
+    <div id="ad-overlay" class="overlay">
+        <div class="ad-box">
+            <p>Advertisement</p>
+            <div class="ad-placeholder">Your Ad Here</div>
+            <button id="skip-ad" disabled>Skip in 5...</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>URBLE</h1>
+            <button id="theme-toggle">🌓</button>
+        </header>
+
+        <div id="game-screen">
+            <div class="stats-bar">Round <span id="round-num">1</span>/5</div>
+            <div class="word-display">
+                <small>What is the definition of:</small>
+                <h2 id="current-word">Loading...</h2>
+            </div>
+            <div id="options-container" class="options-grid"></div>
+        </div>
+
+        <div id="results-screen" class="hidden">
+            <h2>Game Over</h2>
+            <div id="final-score"></div>
+            <div id="emoji-grid"></div>
+            <button id="share-btn">Share Results</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
