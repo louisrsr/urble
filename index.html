@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Urble (Static)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Urban Quiz</h1>
+      <div id="controls">
+        <label><input type="checkbox" id="allow-nsfw"> Show NSFW</label>
+        <button id="start-btn">Start Daily Game</button>
+        <button id="stats-btn">Stats</button>
+      </div>
+    </header>
+
+    <main id="game-area">
+      <div id="splash">
+        <p>Guess the Urban Dictionary definition. 4 choices. 5 rounds. No login required.</p>
+      </div>
+
+      <div id="ad" class="hidden">
+        <p>Advertisement (demo) — <button id="skip-ad">Skip</button></p>
+      </div>
+
+      <div id="round" class="hidden">
+        <h2 id="word-title"></h2>
+        <div id="options"></div>
+        <div id="progress"></div>
+      </div>
+
+      <div id="result" class="hidden">
+        <h2 id="result-text"></h2>
+        <p id="score-text"></p>
+        <button id="play-again">Play Again</button>
+      </div>
+
+      <div id="stats" class="hidden">
+        <h2>Stats</h2>
+        <pre id="stats-json"></pre>
+        <button id="close-stats">Close</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
+</body>
+</html>
