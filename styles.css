@@ -1,155 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;600&display=swap');
+/* ====== Base Reset ====== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-:root{
-  --bg: #ffffff;
+:root {
+  --bg: #f6f7fb;
   --card: #ffffff;
-  --accent: #111111;
+  --text: #111318;
   --muted: #6b7280;
-  --text: #111827;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --border: #e5e7eb;
   --correct: #16a34a;
-  --wrong: #ef4444;
-  --app-width: 420px;
-  --app-radius: 18px;
-  --app-shadow: 0 10px 30px rgba(2,6,23,0.12);
-  --safe-padding: env(safe-area-inset-top, 12px);
+  --wrong: #dc2626;
 }
 
-/* Dark theme */
-:root[data-theme="dark"]{
-  --bg: #0b1220;
-  --card: #071021;
-  --accent: #e6eef8;
-  --muted: #9fb4d6;
-  --text: #e6eef8;
-  --app-shadow: 0 10px 30px rgba(0,0,0,0.6);
+[data-theme="dark"] {
+  --bg: #0f1115;
+  --card: #171923;
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --accent: #818cf8;
+  --accent-hover: #6366f1;
+  --border: #262a33;
 }
 
-/* Reset */
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background:var(--bg);
-  color:var(--text);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+  min-height: 100vh;
 }
 
-/* App shell */
-#app-shell{ width:100%; display:flex; justify-content:center; align-items:center; }
-#app{
-  width:100%;
-  max-width: var(--app-width);
-  border-radius: var(--app-radius);
-  box-shadow: var(--app-shadow);
-  overflow:hidden;
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.04);
+/* ====== App Layout ====== */
+
+#app {
+  width: 100%;
+  max-width: 620px;
 }
 
-/* Header */
-header{
-  padding: calc(var(--safe-padding) + 12px) 14px;
-  display:flex;
-  gap:12px;
-  align-items:center;
-  justify-content:space-between;
-  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(250,250,250,1));
-  border-bottom:1px solid rgba(0,0,0,0.06);
-}
-:root[data-theme="dark"] header{
-  background: linear-gradient(180deg, rgba(7,12,20,1), rgba(11,18,32,1));
-  border-bottom:1px solid rgba(255,255,255,0.03);
+/* ====== Header ====== */
+
+header {
+  margin-bottom: 24px;
 }
 
-.title h1{
-  margin:0;
-  font-family: 'Anton', Impact, Haettenschweiler, 'Arial Black', sans-serif;
-  font-size:24px;
-  color:var(--accent);
-  letter-spacing:0.6px;
-}
-.title .tagline{ margin:6px 0 0 0; font-size:11px; color:var(--muted); line-height:1.1; }
-
-/* Controls */
-#controls{ display:flex; gap:8px; align-items:center; }
-#theme-toggle{ background:transparent; border:1px solid rgba(0,0,0,0.06); padding:6px 8px; border-radius:8px; cursor:pointer; font-size:16px; }
-:root[data-theme="dark"] #theme-toggle{ border:1px solid rgba(255,255,255,0.04); }
-.nsfw-toggle{ font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px; }
-
-/* Main */
-main{ padding:14px; display:flex; flex-direction:column; gap:12px; background:transparent; }
-
-/* Card */
-.card{ background: var(--card); padding:14px; border-radius:12px; border:1px solid rgba(0,0,0,0.04); }
-:root[data-theme="dark"] .card{ border:1px solid rgba(255,255,255,0.02); }
-
-/* Round header */
-.round-header{ display:flex; flex-direction:column; gap:6px; }
-#word-title{ margin:0; font-size:20px; font-weight:700; color:var(--accent); }
-#progress{ font-size:13px; color:var(--muted); }
-
-/* FORCE vertical layout and full-width options */
-#options, .options-vertical {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-  align-items: stretch !important;
-  width: 100% !important;
-  margin-top: 12px !important;
+.title h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -1px;
 }
 
-/* Each option fills the container */
-#options .option, .options-vertical .option, .option {
-  display: block !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  text-align: left !important;
-  padding: 14px !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  background: linear-gradient(180deg,#fff,#f8fafc) !important;
-  cursor: pointer !important;
-  margin: 0 !important;
-  font-size: 15px !important;
-  line-height: 1.3 !important;
-}
-:root[data-theme="dark"] .option{
-  background: linear-gradient(180deg, rgba(12,20,28,0.9), rgba(8,14,20,0.9)) !important;
-  border: 1px solid rgba(255,255,255,0.02) !important;
-}
-.option:hover{ background:#f1f5f9 !important; }
-:root[data-theme="dark"] .option:hover{ background: rgba(255,255,255,0.02) !important; }
-
-/* Prevent floats or grid rules */
-#options .option, .options-vertical .option { float: none !important; }
-#options, .options-vertical { grid-template-columns: none !important; }
-
-/* Review list */
-.review-list{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
-.review-item{ padding:12px; border-radius:8px; background:var(--card); border:1px solid rgba(0,0,0,0.04); }
-.review-item .word{ font-weight:700; margin-bottom:6px; }
-.review-item .choice{ font-size:14px; color:var(--muted); }
-
-/* Result actions */
-.result-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
-.cheeky{ margin-top:8px; font-weight:700; color:var(--muted); }
-
-/* Small screens */
-@media (max-width:420px){
-  body{ padding: env(safe-area-inset-top, 8px) 8px 24px 8px; }
-  #app{ border-radius: 12px; width:100%; box-shadow:none; border:none; }
+.tagline {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
-/* Focus */
-.option:focus{ outline: 3px solid rgba(31,111,235,0.12); outline-offset:2px; }
-
-/* Dark mode fallback */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]){ --bg:#0b1220; --card:#071021; --text:#e6eef8; --muted:#9fb4d6; --accent:#e6eef8; }
-}
+#controls {
