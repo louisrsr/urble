@@ -1,96 +1,178 @@
 /* =========================
-   URBLE — Apple x Urban UI
+   URBLE — Premium Mobile UI
 ========================= */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 :root {
-  --bg: #000000;
-  --card: #111111;
-  --card-light: #1c1c1e;
-  --text: #ffffff;
+  --bg: #000;
+  --card: #1c1c1e;
+  --text: #fff;
   --muted: #9a9aa0;
-  --accent: #f8df00; /* Urban yellow */
+  --accent: #f8df00;
   --accent-dark: #d4c000;
   --border: #2a2a2c;
   --correct: #30d158;
   --wrong: #ff453a;
 }
 
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "SF Pro Display", system-ui, sans-serif;
-
+    system-ui, sans-serif;
   display: flex;
   justify-content: center;
 }
 
-/* Force vertical mobile layout even on desktop */
 #app {
   width: 100%;
-  max-width: 430px; /* iPhone width */
+  max-width: 430px;
   min-height: 100vh;
   padding: 24px 18px 40px;
   display: flex;
   flex-direction: column;
 }
 
-/* =========================
-   HEADER
-========================= */
+/* ===== HEADER ===== */
 
 header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .title h1 {
   margin: 0;
   font-size: 2.4rem;
   font-weight: 700;
-  letter-spacing: -1px;
 }
 
 .tagline {
   margin-top: 6px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--muted);
 }
 
 #controls {
-  margin-top: 18px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* =========================
-   CARDS
-========================= */
+/* ===== CARDS ===== */
 
 .card {
-  background: var(--card-light);
-  border-radius: 22px;
+  background: var(--card);
+  border-radius: 24px;
   padding: 22px;
   margin-bottom: 18px;
   border: 1px solid var(--border);
+  animation: fadeIn 0.25s ease;
+}
+
+.hidden { display: none; }
+
+/* ===== BUTTONS ===== */
+
+button {
+  border: none;
+  border-radius: 20px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+button:active { transform: scale(0.97); }
+
+#start-btn {
+  background: var(--accent);
+  color: #000;
+}
+
+#start-btn:hover { background: var(--accent-dark); }
+
+#theme-toggle,
+#stats-btn {
+  background: #2c2c2e;
+  color: white;
+}
+
+/* ===== ROUND ===== */
+
+.round-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#word-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+#progress {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ===== 2x2 GRID ANSWERS ===== */
+
+.options-vertical {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.options-vertical button {
+  background: #111;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px;
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
   transition: 0.2s ease;
 }
 
-.hidden {
-  display: none;
+.options-vertical button:hover {
+  border-color: var(--accent);
 }
 
-/* =========================
-   BUTTONS (Apple-style)
-========================= */
+.option-correct {
+  border-color: var(--correct) !important;
+  background: rgba(48,209,88,0.15) !important;
+}
 
-button {
-  appearance: none;
+.option-wrong {
+  border-color: var(--wrong) !important;
+  background: rgba(255,69,58,0.15) !important;
+}
+
+/* ===== RESULT ===== */
+
+#result-text {
+  font-size: 1.7rem;
+  text-align: center;
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ===== ANIMATION ===== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
