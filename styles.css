@@ -1,17 +1,21 @@
 /* =========================
-   URBLE — Premium Mobile UI
+   URBLE — Urban Blue Edition
 ========================= */
 
 :root {
-  --bg: #000;
-  --card: #1c1c1e;
-  --text: #fff;
-  --muted: #9a9aa0;
-  --accent: #f8df00;
-  --accent-dark: #d4c000;
-  --border: #2a2a2c;
-  --correct: #30d158;
-  --wrong: #ff453a;
+  --bg: #0b0f19;
+  --card: #141a2a;
+  --card-2: #1b2235;
+  --text: #ffffff;
+  --muted: #8b95b3;
+
+  --primary: #1d4ed8;   /* Urban blue */
+  --accent: #facc15;    /* Urban yellow */
+
+  --correct: #22c55e;
+  --wrong: #ef4444;
+
+  --border: #2a3350;
 }
 
 * { box-sizing: border-box; }
@@ -20,8 +24,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   display: flex;
   justify-content: center;
 }
@@ -39,26 +42,36 @@ body {
 
 header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .title h1 {
   margin: 0;
-  font-size: 2.4rem;
+  font-size: 2.3rem;
   font-weight: 700;
+  color: var(--primary);
 }
 
 .tagline {
-  margin-top: 6px;
   font-size: 0.9rem;
   color: var(--muted);
 }
 
-#controls {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* ===== PROGRESS BAR ===== */
+
+#progress-bar {
+  height: 6px;
+  background: var(--card);
+  border-radius: 100px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+#progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--primary);
+  transition: width 0.3s ease;
 }
 
 /* ===== CARDS ===== */
@@ -69,7 +82,6 @@ header {
   padding: 22px;
   margin-bottom: 18px;
   border: 1px solid var(--border);
-  animation: fadeIn 0.25s ease;
 }
 
 .hidden { display: none; }
@@ -78,7 +90,7 @@ header {
 
 button {
   border: none;
-  border-radius: 20px;
+  border-radius: 18px;
   padding: 16px;
   font-size: 1rem;
   font-weight: 600;
@@ -89,35 +101,29 @@ button {
 button:active { transform: scale(0.97); }
 
 #start-btn {
-  background: var(--accent);
-  color: #000;
+  background: var(--primary);
+  color: white;
 }
 
-#start-btn:hover { background: var(--accent-dark); }
-
-#theme-toggle,
-#stats-btn {
-  background: #2c2c2e;
-  color: white;
+#start-btn:hover {
+  background: #1e40af;
 }
 
 /* ===== ROUND ===== */
 
 .round-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 #word-title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.9rem;
   margin: 0;
 }
 
 #progress {
-  margin-top: 6px;
-  color: var(--muted);
   font-size: 0.85rem;
+  color: var(--muted);
 }
 
 /* ===== 2x2 GRID ANSWERS ===== */
@@ -129,9 +135,8 @@ button:active { transform: scale(0.97); }
 }
 
 .options-vertical button {
-  background: #111;
-  color: var(--text);
-  border: 1px solid var(--border);
+  background: var(--card-2);
+  border: 2px solid var(--border);
   border-radius: 22px;
   padding: 18px;
   text-align: left;
@@ -144,35 +149,29 @@ button:active { transform: scale(0.97); }
 }
 
 .options-vertical button:hover {
-  border-color: var(--accent);
+  border-color: var(--primary);
+  background: #20294a;
 }
 
 .option-correct {
   border-color: var(--correct) !important;
-  background: rgba(48,209,88,0.15) !important;
+  background: rgba(34,197,94,0.15) !important;
 }
 
 .option-wrong {
   border-color: var(--wrong) !important;
-  background: rgba(255,69,58,0.15) !important;
+  background: rgba(239,68,68,0.15) !important;
 }
 
 /* ===== RESULT ===== */
 
 #result-text {
-  font-size: 1.7rem;
   text-align: center;
+  font-size: 1.6rem;
 }
 
 .result-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-/* ===== ANIMATION ===== */
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
