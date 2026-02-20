@@ -1,8 +1,8 @@
-// Urble final client: vertical layout, reliable saving, relative fetch, review + share
-// Exposes window.__URBLE_DEBUG__ for quick debugging in console.
+// app.js — Urble (updated start behavior + debug)
 (function(){
   const STATS_KEY = 'urble_stats';
   const ROUNDS = 5;
+  const AD_MS = 1200; // ad duration before auto-start
 
   // DOM
   const startBtn = document.getElementById('start-btn');
@@ -31,6 +31,7 @@
   let currentIndex = 0;
   let score = 0;
   let selections = [];
+  let adAutoStartTimer = null;
 
   // Helpers
   function show(el){ el.classList.remove('hidden'); }
@@ -40,7 +41,6 @@
     try {
       const res = await fetch('words.json');
       words = await res.json();
-      // expose for debugging
       window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
       window.__URBLE_DEBUG__.words = words;
     } catch (e) {
@@ -67,12 +67,17 @@
     const shuffled = seededShuffle(pool, seed);
     const selected = shuffled.slice(0, Math.min(count, shuffled.length));
     return selected.map(item => {
+      // pick distractors that are likely related by reusing other real definitions
       const others = pool.filter(p => p.id !== item.id);
+      // try to pick distractors that share a word fragment (simple heuristic)
+      const fragment = item.word.split(/\s+/)[0].toLowerCase().slice(0,4);
+      const related = others.filter(o => o.word.toLowerCase().includes(fragment));
+      const poolForDistractors = related.length >= 3 ? related.concat(others) : others;
       const distractors = [];
-      for (let i = 0; i < 3 && others.length > 0; i++) {
-        const idx = Math.floor(Math.random() * others.length);
-        distractors.push(others[idx]);
-        others.splice(idx, 1);
+      for (let i = 0; i < 3 && poolForDistractors.length > 0; i++) {
+        const idx = Math.floor(Math.random() * poolForDistractors.length);
+        distractors.push(poolForDistractors[idx]);
+        poolForDistractors.splice(idx, 1);
       }
       const options = [{ text: item.definition, correct: true }].concat(distractors.map(d => ({ text: d.definition, correct: false })));
       for (let i = options.length - 1; i > 0; i--) {
@@ -83,18 +88,28 @@
     });
   }
 
-  // Events
+  // Start button: show ad and auto-start after AD_MS; skip still works
   startBtn.addEventListener('click', async () => {
     hide(splash);
     show(ad);
     skipAd.disabled = true;
-    setTimeout(() => { skipAd.disabled = false; }, 1200);
+    // load words if needed
     if (!words.length) await loadWords();
+    // prepare game state immediately so ad time is used to prepare
     gameState = { date: new Date().toISOString().slice(0,10), rounds: getDailyWords(ROUNDS, allowNSFW.checked) };
     selections = [];
+    // set auto-start timer
+    if (adAutoStartTimer) clearTimeout(adAutoStartTimer);
+    adAutoStartTimer = setTimeout(() => {
+      skipAd.disabled = false;
+      hide(ad);
+      startGame();
+    }, AD_MS);
   });
 
+  // skip ad immediately
   skipAd.addEventListener('click', () => {
+    if (adAutoStartTimer) { clearTimeout(adAutoStartTimer); adAutoStartTimer = null; }
     hide(ad);
     startGame();
   });
@@ -140,7 +155,19 @@
     hide(roundEl);
     show(ad);
     skipAd.disabled = false;
+    // show ad then review; auto-start of review after AD_MS
+    if (adAutoStartTimer) clearTimeout(adAutoStartTimer);
+    adAutoStartTimer = setTimeout(() => {
+      hide(ad);
+      show(resultEl);
+      resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
+      scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
+      renderReview();
+      saveStats(score, gameState.date);
+    }, AD_MS);
+    // allow skip to immediately show review
     skipAd.onclick = () => {
+      if (adAutoStartTimer) { clearTimeout(adAutoStartTimer); adAutoStartTimer = null; }
       hide(ad);
       show(resultEl);
       resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
@@ -215,22 +242,21 @@
     const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
     stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
     localStorage.setItem(STATS_KEY(), JSON.stringify(stats));
-    // expose latest for debug
     window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
     window.__URBLE_DEBUG__.lastSaved = { date, score };
   }
 
   function STATS_KEY(){ return STATS_KEY._ || (STATS_KEY._ = 'urble_stats'); }
 
-  // Expose a small debug helper
+  // Debug helper
   window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
   window.__URBLE_DEBUG__.info = () => ({
     url: location.href,
     wordsLoaded: (window.__URBLE_DEBUG__.words || []).length,
     stats: JSON.parse(localStorage.getItem(STATS_KEY()) || '[]'),
-    swRegistrations: typeof navigator.serviceWorker !== 'undefined' ? 'available' : 'unavailable'
+    swAvailable: typeof navigator.serviceWorker !== 'undefined'
   });
 
-  // initial load (no auto-start)
+  // initial load
   loadWords();
 })();
