@@ -1,0 +1,8 @@
+[
+  { "id": "w1", "word": "yeet", "definition": "To throw something with force or enthusiasm", "nsfw": false },
+  { "id": "w2", "word": "ghosting", "definition": "Suddenly cutting off communication with someone", "nsfw": false },
+  { "id": "w3", "word": "flex", "definition": "To show off or boast", "nsfw": false },
+  { "id": "w4", "word": "stan", "definition": "An obsessive fan of a celebrity", "nsfw": false },
+  { "id": "w5", "word": "savage", "definition": "Acting in a ruthless or brutally honest way", "nsfw": false },
+  { "id": "w6", "word": "thirst trap", "definition": "A provocative photo posted to attract attention", "nsfw": true }
+]
