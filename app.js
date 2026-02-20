@@ -1,40 +1,32 @@
-// app.js — Urble final: reliable start, vertical layout, review + cheeky messages
+// app.js — Minimal robust Urble client
 (function(){
   const STATS_KEY = 'urble_stats';
   const ROUNDS = 5;
-  const AD_MS = 1200;
+  const AD_MS = 800;
 
-  // DOM
-  const startBtn = document.getElementById('start-btn');
-  const allowNSFW = document.getElementById('allow-nsfw');
-  const statsBtn = document.getElementById('stats-btn');
-  const splash = document.getElementById('splash');
-  const ad = document.getElementById('ad');
-  const skipAd = document.getElementById('skip-ad');
-  const roundEl = document.getElementById('round');
-  const wordTitle = document.getElementById('word-title');
-  const optionsEl = document.getElementById('options');
-  const progressEl = document.getElementById('progress');
-  const resultEl = document.getElementById('result');
-  const resultText = document.getElementById('result-text');
-  const scoreText = document.getElementById('score-text');
-  const cheekyEl = document.getElementById('cheeky');
-  const reviewEl = document.getElementById('review');
-  const playAgain = document.getElementById('play-again');
-  const shareBtn = document.getElementById('share-score');
-  const statsPanel = document.getElementById('stats');
-  const statsJson = document.getElementById('stats-json');
-  const closeStats = document.getElementById('close-stats');
+  const $ = s => document.querySelector(s);
+  const startBtn = $('#start-btn');
+  const allowNSFW = $('#allow-nsfw');
+  const skipAd = $('#skip-ad');
+  const splash = $('#splash');
+  const ad = $('#ad');
+  const roundEl = $('#round');
+  const resultEl = $('#result');
+  const wordTitle = $('#word-title');
+  const optionsEl = $('#options');
+  const progressEl = $('#progress');
+  const scoreText = $('#score-text');
+  const resultText = $('#result-text');
+  const cheekyEl = $('#cheeky');
+  const reviewEl = $('#review');
 
-  // State
   let words = [];
-  let gameState = null;
-  let currentIndex = 0;
+  let game = null;
+  let idx = 0;
   let score = 0;
-  let selections = [];
+  let picks = [];
   let adTimer = null;
 
-  // Cheeky messages
   const MESSAGES = {
     0: "0/5 — Oof. You just discovered a new dialect of confusion.",
     1: "1/5 — At least you tried. Urban mysteries remain unsolved.",
@@ -44,219 +36,122 @@
     5: "5/5 — Legendary. Urble champion. You speak fluent street."
   };
 
-  function show(el){ el.classList.remove('hidden'); }
-  function hide(el){ el.classList.add('hidden'); }
+  function show(el){ el && el.classList.remove('hidden'); }
+  function hide(el){ el && el.classList.add('hidden'); }
 
-  async function loadWords() {
+  async function loadWords(){
     try {
-      const res = await fetch('words.json', { cache: 'no-store' });
-      words = await res.json();
-      window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
-      window.__URBLE_DEBUG__.words = words;
-    } catch (e) {
+      const r = await fetch('words.json', {cache:'no-store'});
+      words = await r.json();
+    } catch(e){
       words = [];
-      console.error('Could not load words.json', e);
+      console.error('Failed to load words.json', e);
     }
   }
 
-  function seededShuffle(arr, seed) {
-    const a = arr.slice();
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
-    for (let i = a.length - 1; i > 0; i--) {
-      h = Math.imul(h ^ i, 16777619) >>> 0;
-      const j = h % (i + 1);
-      [a[i], a[j]] = [a[j], a[i]];
-    }
+  function seededShuffle(arr, seed){
+    const a = arr.slice(); let h = 2166136261 >>> 0;
+    for(let i=0;i<seed.length;i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+    for(let i=a.length-1;i>0;i--){ h = Math.imul(h ^ i, 16777619) >>> 0; const j = h % (i+1); [a[i],a[j]]=[a[j],a[i]]; }
     return a;
   }
 
-  function getDailyWords(count, allowNSFW) {
+  function buildDaily(count, allowNSFWFlag){
     const seed = new Date().toISOString().slice(0,10);
-    const pool = allowNSFW ? words : words.filter(w => !w.nsfw);
-    const shuffled = seededShuffle(pool, seed);
-    const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-    return selected.map(item => {
-      const others = pool.filter(p => p.id !== item.id);
-      const fragment = item.word.split(/\s+/)[0].toLowerCase().slice(0,4);
-      const related = others.filter(o => o.word.toLowerCase().includes(fragment));
-      const poolForDistractors = related.length >= 3 ? related.concat(others) : others;
+    const pool = allowNSFWFlag ? words : words.filter(w=>!w.nsfw);
+    const shuffled = seededShuffle(pool, seed).slice(0, Math.min(count, pool.length));
+    return shuffled.map(item=>{
+      const others = pool.filter(p=>p.id!==item.id);
       const distractors = [];
-      for (let i = 0; i < 3 && poolForDistractors.length > 0; i++) {
-        const idx = Math.floor(Math.random() * poolForDistractors.length);
-        distractors.push(poolForDistractors[idx]);
-        poolForDistractors.splice(idx, 1);
-      }
-      const options = [{ text: item.definition, correct: true }].concat(distractors.map(d => ({ text: d.definition, correct: false })));
-      for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-      }
-      return { id: item.id, word: item.word, nsfw: !!item.nsfw, options };
+      for(let i=0;i<3 && others.length;i++){ const j=Math.floor(Math.random()*others.length); distractors.push(others[j]); others.splice(j,1); }
+      const opts = [{text:item.definition, correct:true}].concat(distractors.map(d=>({text:d.definition, correct:false})));
+      for(let i=opts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [opts[i],opts[j]]=[opts[j],opts[i]]; }
+      return { word: item.word, nsfw: !!item.nsfw, options: opts };
     });
   }
 
-  // Start button
-  startBtn.addEventListener('click', async () => {
+  // Start button handler
+  function startHandler(){
     hide(splash);
     show(ad);
     skipAd.disabled = true;
-    if (!words.length) await loadWords();
-    gameState = { date: new Date().toISOString().slice(0,10), rounds: getDailyWords(ROUNDS, allowNSFW.checked) };
-    selections = [];
-    if (adTimer) clearTimeout(adTimer);
-    adTimer = setTimeout(() => {
-      skipAd.disabled = false;
-      hide(ad);
-      startGame();
-    }, AD_MS);
-  });
-
-  skipAd.addEventListener('click', () => {
-    if (adTimer) { clearTimeout(adTimer); adTimer = null; }
-    hide(ad);
-    startGame();
-  });
-
-  function startGame() {
-    currentIndex = 0;
-    score = 0;
-    selections = [];
-    show(roundEl);
-    hide(resultEl);
-    renderRound();
+    (async ()=>{
+      if(!words.length) await loadWords();
+      game = { rounds: buildDaily(ROUNDS, allowNSFW.checked), date: new Date().toISOString().slice(0,10) };
+      picks = []; idx = 0; score = 0;
+      if(adTimer) clearTimeout(adTimer);
+      adTimer = setTimeout(()=>{ skipAd.disabled=false; hide(ad); startRound(); }, AD_MS);
+    })();
   }
 
-  function renderRound() {
-    const round = gameState.rounds[currentIndex];
-    wordTitle.textContent = round.word;
+  function startRound(){
+    show(roundEl); hide(resultEl); renderRound();
+  }
+
+  function renderRound(){
+    const r = game.rounds[idx];
+    wordTitle.textContent = r.word;
     optionsEl.innerHTML = '';
-    round.options.forEach((opt) => {
-      const btn = document.createElement('div');
-      btn.className = 'option';
-      if (round.nsfw) btn.classList.add('nsfw');
-      btn.textContent = opt.text;
-      btn.addEventListener('click', () => chooseOption(opt, btn));
-      optionsEl.appendChild(btn);
+    r.options.forEach(opt=>{
+      const el = document.createElement('div');
+      el.className = 'option';
+      if(r.nsfw) el.classList.add('nsfw');
+      el.textContent = opt.text;
+      el.addEventListener('click', ()=> chooseOption(opt, el));
+      optionsEl.appendChild(el);
     });
-    progressEl.textContent = `Round ${currentIndex + 1} / ${gameState.rounds.length}`;
+    progressEl.textContent = `Round ${idx+1} / ${game.rounds.length}`;
   }
 
-  function chooseOption(opt, btn) {
-    btn.style.outline = opt.correct ? `3px solid rgba(22,163,74,0.12)` : `3px solid rgba(239,68,68,0.12)`;
-    const round = gameState.rounds[currentIndex];
-    const chosenText = opt.text;
-    const correctOpt = round.options.find(o => o.correct);
-    const correctText = correctOpt ? correctOpt.text : '';
-    const wasCorrect = !!opt.correct;
-    selections.push({ word: round.word, chosen: chosenText, correct: correctText, correctFlag: wasCorrect, nsfw: round.nsfw });
-    if (wasCorrect) score += 1;
-    setTimeout(() => {
-      currentIndex += 1;
-      if (currentIndex >= gameState.rounds.length) endGame();
-      else renderRound();
-    }, 350);
+  function chooseOption(opt, el){
+    el.style.outline = opt.correct ? '3px solid rgba(22,163,74,0.12)' : '3px solid rgba(239,68,68,0.12)';
+    const r = game.rounds[idx];
+    const correct = r.options.find(o=>o.correct).text;
+    picks.push({ word: r.word, chosen: opt.text, correct, ok: !!opt.correct, nsfw: r.nsfw });
+    if(opt.correct) score++;
+    setTimeout(()=>{ idx++; if(idx>=game.rounds.length) finishGame(); else renderRound(); }, 350);
   }
 
-  function endGame() {
-    hide(roundEl);
-    show(ad);
-    skipAd.disabled = false;
-    if (adTimer) clearTimeout(adTimer);
-    adTimer = setTimeout(() => {
-      hide(ad);
-      show(resultEl);
-      resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
-      scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
-      cheekyEl.textContent = MESSAGES[score] || '';
-      renderReview();
-      saveStats(score, gameState.date);
-    }, AD_MS);
-    skipAd.onclick = () => {
-      if (adTimer) { clearTimeout(adTimer); adTimer = null; }
-      hide(ad);
-      show(resultEl);
-      resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
-      scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
-      cheekyEl.textContent = MESSAGES[score] || '';
-      renderReview();
-      saveStats(score, gameState.date);
-    };
+  function finishGame(){
+    hide(roundEl); show(ad); skipAd.disabled = false;
+    if(adTimer) clearTimeout(adTimer);
+    adTimer = setTimeout(()=>{ hide(ad); show(resultEl); showReview(); saveStats(); }, AD_MS);
+    skipAd.onclick = ()=>{ if(adTimer){ clearTimeout(adTimer); adTimer=null; } hide(ad); show(resultEl); showReview(); saveStats(); };
   }
 
-  function renderReview() {
+  function showReview(){
+    resultText.textContent = score===ROUNDS ? 'Perfect!' : 'Finished';
+    scoreText.textContent = `Score: ${score} / ${ROUNDS}`;
+    cheekyEl.textContent = MESSAGES[score] || '';
     reviewEl.innerHTML = '';
-    selections.forEach((s, idx) => {
-      const item = document.createElement('div');
-      item.className = 'review-item';
-      const wordEl = document.createElement('div');
-      wordEl.className = 'word';
-      wordEl.textContent = `${idx + 1}. ${s.word}${s.nsfw ? ' (NSFW)' : ''}`;
-      const chosenEl = document.createElement('div');
-      chosenEl.className = 'choice';
-      chosenEl.innerHTML = `<strong>Your answer:</strong> ${s.chosen}`;
-      const correctEl = document.createElement('div');
-      correctEl.className = 'choice';
-      correctEl.innerHTML = `<strong>Correct:</strong> ${s.correct}`;
-      item.style.border = s.correctFlag ? '1px solid rgba(22,163,74,0.12)' : '1px solid rgba(239,68,68,0.12)';
-      item.appendChild(wordEl);
-      item.appendChild(chosenEl);
-      item.appendChild(correctEl);
-      reviewEl.appendChild(item);
+    picks.forEach((p,i)=>{
+      const it = document.createElement('div'); it.className='review-item';
+      it.innerHTML = `<div class="word">${i+1}. ${p.word}${p.nsfw?' (NSFW)':''}</div>
+        <div class="choice"><strong>Your answer:</strong> ${p.chosen}</div>
+        <div class="choice"><strong>Correct:</strong> ${p.correct}</div>`;
+      it.style.border = p.ok ? '1px solid rgba(22,163,74,0.12)' : '1px solid rgba(239,68,68,0.12)';
+      reviewEl.appendChild(it);
     });
   }
 
-  playAgain.addEventListener('click', () => startBtn.click());
-
-  shareBtn.addEventListener('click', async () => {
-    const text = `I scored ${score}/${ROUNDS} on Urble — Guess the Urban Dictionary definition! Can you beat me?`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Urble score', text, url: location.href }); }
-      catch (e) { copyToClipboard(text); alert('Score copied to clipboard.'); }
-    } else {
-      copyToClipboard(text);
-      alert('Score copied to clipboard. Share it with your friends!');
-    }
-  });
-
-  function copyToClipboard(text) {
-    try { navigator.clipboard.writeText(text); }
-    catch (e) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-    }
+  function saveStats(){
+    try{
+      const s = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
+      s.push({ date: game.date, score, rounds: ROUNDS, ts: new Date().toISOString() });
+      localStorage.setItem(STATS_KEY, JSON.stringify(s));
+    }catch(e){}
   }
 
-  statsBtn.addEventListener('click', () => {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
-    statsJson.textContent = JSON.stringify(stats, null, 2);
-    show(statsPanel);
-  });
+  // Attach handlers safely (if element missing, log)
+  if(startBtn) startBtn.addEventListener('click', startHandler);
+  else console.error('Start button (#start-btn) not found in DOM');
 
-  closeStats.addEventListener('click', () => hide(statsPanel));
+  if(skipAd) skipAd.addEventListener('click', ()=>{ if(adTimer){ clearTimeout(adTimer); adTimer=null; } hide(ad); startRound(); });
 
-  function saveStats(score, date) {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
-    stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-    localStorage.setItem(STATS_KEY(), JSON.stringify(stats));
-    window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
-    window.__URBLE_DEBUG__.lastSaved = { date, score };
-  }
-
-  function STATS_KEY(){ return STATS_KEY; } // accessor
-
+  // Expose debug helper
   window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
-  window.__URBLE_DEBUG__.info = () => ({
-    url: location.href,
-    wordsLoaded: (window.__URBLE_DEBUG__.words || []).length,
-    stats: JSON.parse(localStorage.getItem(STATS_KEY()) || '[]'),
-    swAvailable: typeof navigator.serviceWorker !== 'undefined'
-  });
+  window.__URBLE_DEBUG__.info = ()=>({ words: words.length, stats: JSON.parse(localStorage.getItem(STATS_KEY)||'[]') });
 
-  // initial load
+  // initial load attempt
   loadWords();
 })();
