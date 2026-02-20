@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Urble — Guess the Urban Dictionary definition!</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -23,7 +23,7 @@
 
     <main id="game-area">
       <section id="splash" class="card">
-        <p>Short sessions, big laughs. Tap Start to play today’s round.</p>
+        <p>Get Rekt!</p>
       </section>
 
       <section id="ad" class="card hidden">
@@ -64,7 +64,8 @@
   <script src="app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      // register service worker but ignore failures silently
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
     }
   </script>
 </body>

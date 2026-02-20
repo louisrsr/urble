@@ -42,13 +42,11 @@ main{padding:16px;flex:1;display:flex;flex-direction:column;align-items:stretch;
 .round-header{display:flex;flex-direction:column;gap:6px}
 #word-title{margin:0;font-size:20px}
 #progress{font-size:13px;color:var(--muted)}
-/* Always vertical options for phone-first layout */
+/* Force vertical layout on all screen sizes */
 .options-vertical{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-.option{background:linear-gradient(180deg, rgba(20,32,51,0.9), rgba(12,20,32,0.9));padding:12px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+.option{background:linear-gradient(180deg, rgba(20,32,51,0.9), rgba(12,20,32,0.9));padding:12px;border-radius:10px;cursor:pointer;border:1px solid transparent;width:100%}
 .option:hover{border-color:rgba(47,99,204,0.25)}
 .option.nsfw{filter:blur(0.6px);opacity:0.95}
-.option.correct{outline:3px solid rgba(34,197,94,0.12)}
-.option.wrong{outline:3px solid rgba(239,68,68,0.12)}
 .review-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
 .review-item{padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(10,16,24,0.6), rgba(8,12,18,0.6));border:1px solid rgba(255,255,255,0.02)}
 .review-item .word{font-weight:600;margin-bottom:6px}

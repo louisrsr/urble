@@ -1,5 +1,5 @@
-const CACHE = 'urban-quiz-static-v1';
-const FILES = ['/', '/index.html', '/styles.css', '/app.js', '/words.json', '/manifest.json'];
+const CACHE = 'urble-static-v1';
+const FILES = ['/', 'index.html', 'styles.css', 'app.js', 'words.json', 'manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
