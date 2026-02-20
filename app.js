@@ -1,4 +1,4 @@
-// app.js — Urble (fixed start + robust behavior + SW cleanup)
+// app.js — Urble (fixed: removed duplicate STATS_KEY, robust start/save behavior)
 (function(){
   const STATS_KEY = 'urble_stats';
   const ROUNDS = 5;
@@ -33,11 +33,10 @@
   let selections = [];
   let adTimer = null;
 
-  // Unregister any old service workers to avoid stale caching (best-effort)
+  // Try to unregister old service workers (best-effort)
   if ('serviceWorker' in navigator) {
-    try {
-      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{});
-    } catch(e) { /* ignore */ }
+    try { navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{}); }
+    catch(e) { /* ignore */ }
   }
 
   function show(el){ el.classList.remove('hidden'); }
@@ -45,7 +44,7 @@
 
   async function loadWords() {
     try {
-      const res = await fetch('words.json', {cache: 'no-store'});
+      const res = await fetch('words.json', { cache: 'no-store' });
       words = await res.json();
       window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
       window.__URBLE_DEBUG__.words = words;
@@ -139,7 +138,6 @@
   }
 
   function chooseOption(opt, btn) {
-    // immediate visual feedback
     btn.style.outline = opt.correct ? '3px solid rgba(34,197,94,0.12)' : '3px solid rgba(239,68,68,0.12)';
     const round = gameState.rounds[currentIndex];
     const chosenText = opt.text;
@@ -148,7 +146,6 @@
     const wasCorrect = !!opt.correct;
     selections.push({ word: round.word, chosen: chosenText, correct: correctText, correctFlag: wasCorrect, nsfw: round.nsfw });
     if (wasCorrect) score += 1;
-    // small delay so user sees feedback
     setTimeout(() => {
       currentIndex += 1;
       if (currentIndex >= gameState.rounds.length) endGame();
@@ -194,8 +191,7 @@
       const correctEl = document.createElement('div');
       correctEl.className = 'choice';
       correctEl.innerHTML = `<strong>Correct:</strong> ${s.correct}`;
-      if (s.correctFlag) item.style.border = '1px solid rgba(34,197,94,0.12)';
-      else item.style.border = '1px solid rgba(239,68,68,0.12)';
+      item.style.border = s.correctFlag ? '1px solid rgba(34,197,94,0.12)' : '1px solid rgba(239,68,68,0.12)';
       item.appendChild(wordEl);
       item.appendChild(chosenEl);
       item.appendChild(correctEl);
@@ -229,7 +225,7 @@
   }
 
   statsBtn.addEventListener('click', () => {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
+    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
     statsJson.textContent = JSON.stringify(stats, null, 2);
     show(statsPanel);
   });
@@ -237,21 +233,21 @@
   closeStats.addEventListener('click', () => hide(statsPanel));
 
   function saveStats(score, date) {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
+    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
     stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-    localStorage.setItem(STATS_KEY(), JSON.stringify(stats));
+    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
     window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
     window.__URBLE_DEBUG__.lastSaved = { date, score };
   }
 
-  function STATS_KEY(){ return STATS_KEY._ || (STATS_KEY._ = 'urble_stats'); }
+  function STATS_KEY(){ return STATS_KEY; } // simple accessor
 
   // Debug helper
   window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
   window.__URBLE_DEBUG__.info = () => ({
     url: location.href,
     wordsLoaded: (window.__URBLE_DEBUG__.words || []).length,
-    stats: JSON.parse(localStorage.getItem(STATS_KEY()) || '[]'),
+    stats: JSON.parse(localStorage.getItem(STATS_KEY) || '[]'),
     swAvailable: typeof navigator.serviceWorker !== 'undefined'
   });
 
