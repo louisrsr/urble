@@ -1,173 +1,206 @@
-const TOTAL_ROUNDS = 5;
-let currentRound = 0;
-let score = 0;
-let results = [];
+document.addEventListener("DOMContentLoaded", () => {
 
-const words = [
-  {
-    word: "Touch grass",
-    correct: "An insult telling someone to go outside and stop being online.",
-    wrong: [
-      "A gardening technique.",
-      "A new dance trend.",
-      "A grass-based diet."
-    ]
-  },
-  {
-    word: "Rizz",
-    correct: "Short for charisma, especially when flirting.",
-    wrong: [
-      "A fizzy drink.",
-      "A gaming strategy.",
-      "An expensive watch."
-    ]
-  },
-  {
-    word: "Mid",
-    correct: "Mediocre or average.",
-    wrong: [
-      "Very impressive.",
-      "A workout move.",
-      "A luxury brand."
-    ]
-  },
-  {
-    word: "Delulu",
-    correct: "Delusional but used humorously.",
-    wrong: [
-      "A cartoon character.",
-      "A cooking style.",
-      "A fashion brand."
-    ]
-  },
-  {
-    word: "NPC",
-    correct: "Someone acting robotic or lacking originality.",
-    wrong: [
-      "A political party.",
-      "A coding language.",
-      "A sneaker brand."
-    ]
-  }
-];
+  const TOTAL_ROUNDS = 5;
+  let currentRound = 0;
+  let score = 0;
+  let results = [];
 
-const splash = document.getElementById("splash");
-const ad = document.getElementById("ad");
-const round = document.getElementById("round");
-const result = document.getElementById("result");
+  const words = [
+    {
+      word: "Touch grass",
+      correct: "An insult telling someone to go outside and stop being online.",
+      wrong: [
+        "A gardening technique.",
+        "A new dance trend.",
+        "A grass-based diet."
+      ]
+    },
+    {
+      word: "Rizz",
+      correct: "Short for charisma, especially when flirting.",
+      wrong: [
+        "A fizzy drink.",
+        "A gaming strategy.",
+        "An expensive watch."
+      ]
+    },
+    {
+      word: "Mid",
+      correct: "Mediocre or average.",
+      wrong: [
+        "Very impressive.",
+        "A workout move.",
+        "A luxury brand."
+      ]
+    },
+    {
+      word: "Delulu",
+      correct: "Delusional but used humorously.",
+      wrong: [
+        "A cartoon character.",
+        "A cooking style.",
+        "A fashion brand."
+      ]
+    },
+    {
+      word: "NPC",
+      correct: "Someone acting robotic or lacking originality.",
+      wrong: [
+        "A political party.",
+        "A coding language.",
+        "A sneaker brand."
+      ]
+    }
+  ];
 
-const wordTitle = document.getElementById("word-title");
-const optionsContainer = document.getElementById("options");
-const progressText = document.getElementById("progress");
-const progressFill = document.getElementById("progress-fill");
+  const splash = document.getElementById("splash");
+  const ad = document.getElementById("ad");
+  const round = document.getElementById("round");
+  const result = document.getElementById("result");
 
-document.getElementById("start-btn").onclick = () => {
-  splash.classList.add("hidden");
-  ad.classList.remove("hidden");
+  const startBtn = document.getElementById("start-btn");
+  const skipAdBtn = document.getElementById("skip-ad");
+  const playAgainBtn = document.getElementById("play-again");
 
-  const skip = document.getElementById("skip-ad");
-  skip.disabled = true;
+  const wordTitle = document.getElementById("word-title");
+  const optionsContainer = document.getElementById("options");
+  const progressText = document.getElementById("progress");
+  const progressFill = document.getElementById("progress-fill");
+  const progressBar = document.getElementById("progress-bar");
 
-  setTimeout(() => {
-    skip.disabled = false;
-  }, 3000);
-};
-
-document.getElementById("skip-ad").onclick = () => {
-  ad.classList.add("hidden");
-  document.getElementById("progress-bar").classList.remove("hidden");
-  startGame();
-};
-
-document.getElementById("play-again").onclick = () => {
-  location.reload();
-};
-
-function startGame() {
-  currentRound = 0;
-  score = 0;
-  results = [];
-  nextRound();
-}
-
-function nextRound() {
-  if (currentRound >= TOTAL_ROUNDS) {
-    endGame();
+  if (!startBtn) {
+    console.error("Start button not found");
     return;
   }
 
-  round.classList.remove("hidden");
-  const data = words[currentRound];
+  /* =========================
+     START BUTTON
+  ========================= */
 
-  wordTitle.textContent = data.word;
-  progressText.textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
-  progressFill.style.width = `${(currentRound / TOTAL_ROUNDS) * 100}%`;
+  startBtn.addEventListener("click", () => {
+    splash.classList.add("hidden");
+    ad.classList.remove("hidden");
 
-  const answers = [data.correct, ...data.wrong]
-    .sort(() => Math.random() - 0.5);
+    skipAdBtn.disabled = true;
 
-  optionsContainer.innerHTML = "";
-
-  answers.forEach(answer => {
-    const btn = document.createElement("button");
-    btn.textContent = answer;
-
-    btn.onclick = () => {
-      handleAnswer(btn, answer === data.correct);
-    };
-
-    optionsContainer.appendChild(btn);
+    setTimeout(() => {
+      skipAdBtn.disabled = false;
+    }, 3000);
   });
-}
 
-function handleAnswer(button, isCorrect) {
-  const buttons = optionsContainer.querySelectorAll("button");
-  buttons.forEach(b => b.disabled = true);
+  /* =========================
+     SKIP AD
+  ========================= */
 
-  if (isCorrect) {
-    button.classList.add("option-correct");
-    score++;
-    results.push("correct");
-    triggerHaptic("correct");
-  } else {
-    button.classList.add("option-wrong");
-    results.push("wrong");
-    triggerHaptic("wrong");
+  skipAdBtn.addEventListener("click", () => {
+    ad.classList.add("hidden");
+    progressBar.classList.remove("hidden");
+    startGame();
+  });
+
+  playAgainBtn.addEventListener("click", () => {
+    location.reload();
+  });
+
+  /* =========================
+     GAME LOGIC
+  ========================= */
+
+  function startGame() {
+    currentRound = 0;
+    score = 0;
+    results = [];
+    nextRound();
   }
 
-  currentRound++;
+  function nextRound() {
+    if (currentRound >= TOTAL_ROUNDS) {
+      endGame();
+      return;
+    }
 
-  setTimeout(() => {
-    nextRound();
-  }, 1000);
-}
+    round.classList.remove("hidden");
 
-function endGame() {
-  round.classList.add("hidden");
-  result.classList.remove("hidden");
+    const data = words[currentRound];
 
-  progressFill.style.width = "100%";
+    wordTitle.textContent = data.word;
+    progressText.textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
+    progressFill.style.width =
+      `${(currentRound / TOTAL_ROUNDS) * 100}%`;
 
-  document.getElementById("result-text").textContent =
-    score === 5 ? "Flawless." : "Game Over";
+    const answers = [data.correct, ...data.wrong]
+      .sort(() => Math.random() - 0.5);
 
-  document.getElementById("score-text").textContent =
-    `You scored ${score} / ${TOTAL_ROUNDS}`;
-}
+    optionsContainer.innerHTML = "";
 
-function triggerHaptic(type) {
-  if (!navigator.vibrate) return;
+    answers.forEach(answer => {
+      const btn = document.createElement("button");
+      btn.textContent = answer;
 
-  if (type === "correct") navigator.vibrate(50);
-  if (type === "wrong") navigator.vibrate([30, 40, 30]);
-}
+      btn.addEventListener("click", () => {
+        handleAnswer(btn, answer === data.correct);
+      });
 
-document.getElementById("share-score").onclick = () => {
-  let grid = `Urble ${score}/5\n\n`;
-  results.forEach(r => {
-    grid += r === "correct" ? "🟦" : "⬛";
-  });
+      optionsContainer.appendChild(btn);
+    });
+  }
 
-  navigator.clipboard.writeText(grid);
-  alert("Copied to clipboard!");
-};
+  function handleAnswer(button, isCorrect) {
+    const buttons = optionsContainer.querySelectorAll("button");
+    buttons.forEach(b => b.disabled = true);
+
+    if (isCorrect) {
+      button.classList.add("option-correct");
+      score++;
+      results.push("correct");
+      triggerHaptic("correct");
+    } else {
+      button.classList.add("option-wrong");
+      results.push("wrong");
+      triggerHaptic("wrong");
+    }
+
+    currentRound++;
+
+    setTimeout(() => {
+      nextRound();
+    }, 1000);
+  }
+
+  function endGame() {
+    round.classList.add("hidden");
+    result.classList.remove("hidden");
+    progressFill.style.width = "100%";
+
+    document.getElementById("result-text").textContent =
+      score === 5 ? "Flawless." : "Game Over";
+
+    document.getElementById("score-text").textContent =
+      `You scored ${score} / ${TOTAL_ROUNDS}`;
+  }
+
+  function triggerHaptic(type) {
+    if (!navigator.vibrate) return;
+
+    if (type === "correct") navigator.vibrate(50);
+    if (type === "wrong") navigator.vibrate([30, 40, 30]);
+  }
+
+  /* =========================
+     SHARE
+  ========================= */
+
+  document.getElementById("share-score")
+    .addEventListener("click", () => {
+
+      let grid = `Urble ${score}/5\n\n`;
+
+      results.forEach(r => {
+        grid += r === "correct" ? "🟦" : "⬛";
+      });
+
+      navigator.clipboard.writeText(grid);
+      alert("Copied to clipboard!");
+    });
+
+});
