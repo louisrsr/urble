@@ -1,237 +1,173 @@
-// app.js — Urble with theme toggle, vertical enforcement, share fallback, review and stats
-(function(){
-  const STATS_KEY = 'urble_stats';
-  const THEME_KEY = 'urble_theme';
-  const ROUNDS = 5;
-  const AD_MS = 800;
+const TOTAL_ROUNDS = 5;
+let currentRound = 0;
+let score = 0;
+let results = [];
 
-  const $ = s => document.querySelector(s);
-  const startBtn = $('#start-btn');
-  const allowNSFW = $('#allow-nsfw');
-  const skipAd = $('#skip-ad');
-  const splash = $('#splash');
-  const ad = $('#ad');
-  const roundEl = $('#round');
-  const resultEl = $('#result');
-  const wordTitle = $('#word-title');
-  const optionsEl = $('#options');
-  const progressEl = $('#progress');
-  const scoreText = $('#score-text');
-  const resultText = $('#result-text');
-  const cheekyEl = $('#cheeky');
-  const reviewEl = $('#review');
-  const themeToggle = $('#theme-toggle');
-  const shareBtn = $('#share-score');
-  const statsBtn = $('#stats-btn');
-  const statsPanel = $('#stats');
-  const statsJson = $('#stats-json');
-  const closeStats = $('#close-stats');
-  const playAgain = $('#play-again');
-
-  let words = [];
-  let game = null;
-  let idx = 0;
-  let score = 0;
-  let picks = [];
-  let adTimer = null;
-
-  const MESSAGES = {
-    0: "0/5 — Oof. You just discovered a new dialect of confusion.",
-    1: "1/5 — At least you tried. Urban mysteries remain unsolved.",
-    2: "2/5 — Not bad. You’re on the outskirts of the vibe.",
-    3: "3/5 — Solid. You know your slang, kind of.",
-    4: "4/5 — Impressive. You’re practically a local.",
-    5: "5/5 — Legendary. Urble champion. You speak fluent street."
-  };
-
-  /* Theme */
-  function applyTheme(theme){
-    if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
-    else document.documentElement.removeAttribute('data-theme');
-    try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
-    if(themeToggle) themeToggle.textContent = theme === 'dark' ? '🌞' : '🌗';
+const words = [
+  {
+    word: "Touch grass",
+    correct: "An insult telling someone to go outside and stop being online.",
+    wrong: [
+      "A gardening technique.",
+      "A new dance trend.",
+      "A grass-based diet."
+    ]
+  },
+  {
+    word: "Rizz",
+    correct: "Short for charisma, especially when flirting.",
+    wrong: [
+      "A fizzy drink.",
+      "A gaming strategy.",
+      "An expensive watch."
+    ]
+  },
+  {
+    word: "Mid",
+    correct: "Mediocre or average.",
+    wrong: [
+      "Very impressive.",
+      "A workout move.",
+      "A luxury brand."
+    ]
+  },
+  {
+    word: "Delulu",
+    correct: "Delusional but used humorously.",
+    wrong: [
+      "A cartoon character.",
+      "A cooking style.",
+      "A fashion brand."
+    ]
+  },
+  {
+    word: "NPC",
+    correct: "Someone acting robotic or lacking originality.",
+    wrong: [
+      "A political party.",
+      "A coding language.",
+      "A sneaker brand."
+    ]
   }
-  function initTheme(){
-    const saved = localStorage.getItem(THEME_KEY);
-    if(saved) applyTheme(saved);
-    else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(prefersDark ? 'dark' : 'light');
-    }
-    if(themeToggle){
-      themeToggle.addEventListener('click', ()=>{
-        const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-      });
-    }
-  }
+];
 
-  /* Vertical runtime enforcement */
-  function enforceVerticalRuntime(){
-    const c = optionsEl;
-    if(!c) return;
-    c.style.display = 'flex';
-    c.style.flexDirection = 'column';
-    c.style.alignItems = 'stretch';
-    Array.from(c.children).forEach(ch => {
-      ch.style.display = 'block';
-      ch.style.width = '100%';
-      ch.style.boxSizing = 'border-box';
-    });
-  }
+const splash = document.getElementById("splash");
+const ad = document.getElementById("ad");
+const round = document.getElementById("round");
+const result = document.getElementById("result");
 
-  /* Load words */
-  async function loadWords(){
-    try {
-      const r = await fetch('words.json', { cache: 'no-store' });
-      words = await r.json();
-    } catch(e){
-      words = [];
-      console.error('Failed to load words.json', e);
-    }
-  }
+const wordTitle = document.getElementById("word-title");
+const optionsContainer = document.getElementById("options");
+const progressText = document.getElementById("progress");
+const progressFill = document.getElementById("progress-fill");
 
-  function seededShuffle(arr, seed){
-    const a = arr.slice(); let h = 2166136261 >>> 0;
-    for(let i=0;i<seed.length;i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
-    for(let i=a.length-1;i>0;i--){ h = Math.imul(h ^ i, 16777619) >>> 0; const j = h % (i+1); [a[i],a[j]]=[a[j],a[i]]; }
-    return a;
+document.getElementById("start-btn").onclick = () => {
+  splash.classList.add("hidden");
+  ad.classList.remove("hidden");
+
+  const skip = document.getElementById("skip-ad");
+  skip.disabled = true;
+
+  setTimeout(() => {
+    skip.disabled = false;
+  }, 3000);
+};
+
+document.getElementById("skip-ad").onclick = () => {
+  ad.classList.add("hidden");
+  document.getElementById("progress-bar").classList.remove("hidden");
+  startGame();
+};
+
+document.getElementById("play-again").onclick = () => {
+  location.reload();
+};
+
+function startGame() {
+  currentRound = 0;
+  score = 0;
+  results = [];
+  nextRound();
+}
+
+function nextRound() {
+  if (currentRound >= TOTAL_ROUNDS) {
+    endGame();
+    return;
   }
 
-  function buildDaily(count, allowNSFWFlag){
-    const seed = new Date().toISOString().slice(0,10);
-    const pool = allowNSFWFlag ? words : words.filter(w=>!w.nsfw);
-    const shuffled = seededShuffle(pool, seed).slice(0, Math.min(count, pool.length));
-    return shuffled.map(item=>{
-      const others = pool.filter(p=>p.id!==item.id);
-      const distractors = [];
-      for(let i=0;i<3 && others.length;i++){ const j=Math.floor(Math.random()*others.length); distractors.push(others[j]); others.splice(j,1); }
-      const opts = [{text:item.definition, correct:true}].concat(distractors.map(d=>({text:d.definition, correct:false})));
-      for(let i=opts.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [opts[i],opts[j]]=[opts[j],opts[i]]; }
-      return { word: item.word, nsfw: !!item.nsfw, options: opts };
-    });
+  round.classList.remove("hidden");
+  const data = words[currentRound];
+
+  wordTitle.textContent = data.word;
+  progressText.textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
+  progressFill.style.width = `${(currentRound / TOTAL_ROUNDS) * 100}%`;
+
+  const answers = [data.correct, ...data.wrong]
+    .sort(() => Math.random() - 0.5);
+
+  optionsContainer.innerHTML = "";
+
+  answers.forEach(answer => {
+    const btn = document.createElement("button");
+    btn.textContent = answer;
+
+    btn.onclick = () => {
+      handleAnswer(btn, answer === data.correct);
+    };
+
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function handleAnswer(button, isCorrect) {
+  const buttons = optionsContainer.querySelectorAll("button");
+  buttons.forEach(b => b.disabled = true);
+
+  if (isCorrect) {
+    button.classList.add("option-correct");
+    score++;
+    results.push("correct");
+    triggerHaptic("correct");
+  } else {
+    button.classList.add("option-wrong");
+    results.push("wrong");
+    triggerHaptic("wrong");
   }
 
-  /* UI helpers */
-  function show(el){ el && el.classList.remove('hidden'); }
-  function hide(el){ el && el.classList.add('hidden'); }
+  currentRound++;
 
-  /* Start flow */
-  async function startHandler(){
-    hide(splash); show(ad); skipAd.disabled = true;
-    if(!words.length) await loadWords();
-    game = { rounds: buildDaily(ROUNDS, allowNSFW.checked), date: new Date().toISOString().slice(0,10) };
-    picks = []; idx = 0; score = 0;
-    if(adTimer) clearTimeout(adTimer);
-    adTimer = setTimeout(()=>{ skipAd.disabled=false; hide(ad); startRound(); }, AD_MS);
-  }
+  setTimeout(() => {
+    nextRound();
+  }, 1000);
+}
 
-  function startRound(){ show(roundEl); hide(resultEl); renderRound(); enforceVerticalRuntime(); }
+function endGame() {
+  round.classList.add("hidden");
+  result.classList.remove("hidden");
 
-  function renderRound(){
-    const r = game.rounds[idx];
-    wordTitle.textContent = r.word;
-    optionsEl.innerHTML = '';
-    r.options.forEach(opt=>{
-      const el = document.createElement('div');
-      el.className = 'option';
-      if(r.nsfw) el.classList.add('nsfw');
-      el.textContent = opt.text;
-      el.tabIndex = 0;
-      el.addEventListener('click', ()=> chooseOption(opt, el));
-      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') chooseOption(opt, el); });
-      optionsEl.appendChild(el);
-    });
-    progressEl.textContent = `Round ${idx+1} / ${game.rounds.length}`;
-    enforceVerticalRuntime();
-  }
+  progressFill.style.width = "100%";
 
-  function chooseOption(opt, el){
-    el.style.outline = opt.correct ? '3px solid rgba(22,163,74,0.12)' : '3px solid rgba(239,68,68,0.12)';
-    const r = game.rounds[idx];
-    const correct = r.options.find(o=>o.correct).text;
-    picks.push({ word: r.word, chosen: opt.text, correct, ok: !!opt.correct, nsfw: r.nsfw });
-    if(opt.correct) score++;
-    setTimeout(()=>{ idx++; if(idx>=game.rounds.length) finishGame(); else renderRound(); }, 350);
-  }
+  document.getElementById("result-text").textContent =
+    score === 5 ? "Flawless." : "Game Over";
 
-  function finishGame(){
-    hide(roundEl); show(ad); skipAd.disabled = false;
-    if(adTimer) clearTimeout(adTimer);
-    adTimer = setTimeout(()=>{ hide(ad); show(resultEl); showReview(); saveStats(); }, AD_MS);
-    skipAd.onclick = ()=>{ if(adTimer){ clearTimeout(adTimer); adTimer=null; } hide(ad); show(resultEl); showReview(); saveStats(); };
-  }
+  document.getElementById("score-text").textContent =
+    `You scored ${score} / ${TOTAL_ROUNDS}`;
+}
 
-  function showReview(){
-    resultText.textContent = score===ROUNDS ? 'Perfect!' : 'Finished';
-    scoreText.textContent = `Score: ${score} / ${ROUNDS}`;
-    cheekyEl.textContent = MESSAGES[score] || '';
-    reviewEl.innerHTML = '';
-    picks.forEach((p,i)=>{
-      const it = document.createElement('div'); it.className='review-item';
-      it.innerHTML = `<div class="word">${i+1}. ${p.word}${p.nsfw?' (NSFW)':''}</div>
-        <div class="choice"><strong>Your answer:</strong> ${p.chosen}</div>
-        <div class="choice"><strong>Correct:</strong> ${p.correct}</div>`;
-      it.style.border = p.ok ? '1px solid rgba(22,163,74,0.12)' : '1px solid rgba(239,68,68,0.12)';
-      reviewEl.appendChild(it);
-    });
-    enforceVerticalRuntime();
-  }
+function triggerHaptic(type) {
+  if (!navigator.vibrate) return;
 
-  function saveStats(){
-    try{
-      const s = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
-      s.push({ date: game.date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-      localStorage.setItem(STATS_KEY, JSON.stringify(s));
-    }catch(e){}
-  }
+  if (type === "correct") navigator.vibrate(50);
+  if (type === "wrong") navigator.vibrate([30, 40, 30]);
+}
 
-  /* Share handler (robust) */
-  function copyToClipboard(text){
-    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    ta.remove();
-    return Promise.resolve();
-  }
-  async function shareHandler(){
-    const scoreEl = document.getElementById('score-text');
-    const scoreTextLocal = scoreEl ? scoreEl.textContent.trim() : `I scored ${score}/${ROUNDS} on Urble!`;
-    const text = `${scoreTextLocal} — Can you beat my Urble score? ${location.href}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Urble score', text, url: location.href }); return; }
-      catch(e){ /* fallback */ }
-    }
-    await copyToClipboard(text);
-    const notice = document.createElement('div');
-    notice.textContent = 'Score copied to clipboard';
-    Object.assign(notice.style, { position:'fixed', bottom:'18px', left:'50%', transform:'translateX(-50%)', background:'#111', color:'#fff', padding:'8px 12px', borderRadius:'8px', zIndex:9999, opacity:0.95 });
-    document.body.appendChild(notice);
-    setTimeout(()=>notice.remove(), 1600);
-  }
+document.getElementById("share-score").onclick = () => {
+  let grid = `Urble ${score}/5\n\n`;
+  results.forEach(r => {
+    grid += r === "correct" ? "🟦" : "⬛";
+  });
 
-  /* Stats panel */
-  function openStats(){
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
-    statsJson.textContent = JSON.stringify(stats, null, 2);
-    show(statsPanel);
-  }
-
-  /* Attach handlers */
-  if(startBtn) startBtn.addEventListener('click', startHandler);
-  if(skipAd) skipAd.addEventListener('click', ()=>{ if(adTimer){ clearTimeout(adTimer); adTimer=null; } hide(ad); startRound(); });
-  if(shareBtn) shareBtn.addEventListener('click', shareHandler);
-  if(statsBtn) statsBtn.addEventListener('click', openStats);
-  if(closeStats) closeStats.addEventListener('click', ()=> hide(statsPanel));
-  if(playAgain) playAgain.addEventListener('click', ()=> startHandler());
-
-  /* Theme init and initial load */
-  initTheme();
-  window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
-  window.__URBLE_DEBUG__.info = ()=>({ words: words.length, stats: JSON.parse(localStorage.getItem(STATS_KEY)||'[]'), theme: localStorage.getItem(THEME_KEY) });
-
-  loadWords();
-})();
+  navigator.clipboard.writeText(grid);
+  alert("Copied to clipboard!");
+};
