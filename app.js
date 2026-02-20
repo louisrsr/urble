@@ -1,4 +1,4 @@
-// Static frontend: uses public/words.json, localStorage for stats, simulates ads
+// Urble static client: mobile-first, end-of-game review, share score
 const startBtn = document.getElementById('start-btn');
 const allowNSFW = document.getElementById('allow-nsfw');
 const statsBtn = document.getElementById('stats-btn');
@@ -12,7 +12,9 @@ const progressEl = document.getElementById('progress');
 const resultEl = document.getElementById('result');
 const resultText = document.getElementById('result-text');
 const scoreText = document.getElementById('score-text');
+const reviewEl = document.getElementById('review');
 const playAgain = document.getElementById('play-again');
+const shareBtn = document.getElementById('share-score');
 const statsPanel = document.getElementById('stats');
 const statsJson = document.getElementById('stats-json');
 const closeStats = document.getElementById('close-stats');
@@ -22,6 +24,7 @@ let gameState = null;
 let currentIndex = 0;
 let score = 0;
 const ROUNDS = 5;
+let selections = []; // store {word, chosen, correct}
 
 function show(el){ el.classList.remove('hidden'); }
 function hide(el){ el.classList.add('hidden'); }
@@ -53,7 +56,6 @@ function getDailyWords(count, allowNSFW) {
   const pool = allowNSFW ? words : words.filter(w => !w.nsfw);
   const shuffled = seededShuffle(pool, seed);
   const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-  // build options: correct + 3 distractors from pool
   return selected.map(item => {
     const others = pool.filter(p => p.id !== item.id);
     const distractors = [];
@@ -78,6 +80,7 @@ startBtn.addEventListener('click', async () => {
   setTimeout(() => { skipAd.disabled = false; }, 1200);
   if (!words.length) await loadWords();
   gameState = { date: new Date().toISOString().slice(0,10), rounds: getDailyWords(ROUNDS, allowNSFW.checked) };
+  selections = [];
 });
 
 skipAd.addEventListener('click', () => {
@@ -88,6 +91,7 @@ skipAd.addEventListener('click', () => {
 function startGame() {
   currentIndex = 0;
   score = 0;
+  selections = [];
   show(roundEl);
   hide(resultEl);
   renderRound();
@@ -97,7 +101,7 @@ function renderRound() {
   const round = gameState.rounds[currentIndex];
   wordTitle.textContent = round.word;
   optionsEl.innerHTML = '';
-  round.options.forEach(opt => {
+  round.options.forEach((opt, i) => {
     const btn = document.createElement('div');
     btn.className = 'option';
     if (round.nsfw) btn.classList.add('nsfw');
@@ -109,7 +113,13 @@ function renderRound() {
 }
 
 function chooseOption(opt) {
-  if (opt.correct) score += 1;
+  const round = gameState.rounds[currentIndex];
+  const chosenText = opt.text;
+  const correctOpt = round.options.find(o => o.correct);
+  const correctText = correctOpt ? correctOpt.text : '';
+  const wasCorrect = !!opt.correct;
+  selections.push({ word: round.word, chosen: chosenText, correct: correctText, correctFlag: wasCorrect, nsfw: round.nsfw });
+  if (wasCorrect) score += 1;
   currentIndex += 1;
   if (currentIndex >= gameState.rounds.length) endGame();
   else renderRound();
@@ -124,16 +134,67 @@ function endGame() {
     show(resultEl);
     resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
     scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
+    renderReview();
     saveStats(score, gameState.date);
   };
 }
 
+function renderReview() {
+  reviewEl.innerHTML = '';
+  selections.forEach((s, idx) => {
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    const wordEl = document.createElement('div');
+    wordEl.className = 'word';
+    wordEl.textContent = `${idx + 1}. ${s.word}${s.nsfw ? ' (NSFW)' : ''}`;
+    const chosenEl = document.createElement('div');
+    chosenEl.className = 'choice';
+    chosenEl.innerHTML = `<strong>Your answer:</strong> ${s.chosen}`;
+    const correctEl = document.createElement('div');
+    correctEl.className = 'choice';
+    correctEl.innerHTML = `<strong>Correct:</strong> ${s.correct}`;
+    if (s.correctFlag) {
+      item.style.border = '1px solid rgba(34,197,94,0.12)';
+    } else {
+      item.style.border = '1px solid rgba(239,68,68,0.12)';
+    }
+    item.appendChild(wordEl);
+    item.appendChild(chosenEl);
+    item.appendChild(correctEl);
+    reviewEl.appendChild(item);
+  });
+}
+
 playAgain.addEventListener('click', () => {
+  // restart daily (same day will be same)
   startBtn.click();
 });
 
+shareBtn.addEventListener('click', async () => {
+  const text = `I scored ${score}/${ROUNDS} on Urble — Guess the Urban Dictionary definition! Can you beat me?`;
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Urble score', text, url: location.href }); }
+    catch (e) { copyToClipboard(text); alert('Score copied to clipboard.'); }
+  } else {
+    copyToClipboard(text);
+    alert('Score copied to clipboard. Share it with your friends!');
+  }
+});
+
+function copyToClipboard(text) {
+  try { navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+}
+
 statsBtn.addEventListener('click', () => {
-  const stats = JSON.parse(localStorage.getItem('urban_quiz_stats') || '[]');
+  const stats = JSON.parse(localStorage.getItem('urble_stats') || '[]');
   statsJson.textContent = JSON.stringify(stats, null, 2);
   show(statsPanel);
 });
@@ -141,7 +202,7 @@ statsBtn.addEventListener('click', () => {
 closeStats.addEventListener('click', () => hide(statsPanel));
 
 function saveStats(score, date) {
-  const stats = JSON.parse(localStorage.getItem('urban_quiz_stats') || '[]');
+  const stats = JSON.parse(localStorage.getItem('urble_stats') || '[]');
   stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-  localStorage.setItem('urban_quiz_stats', JSON.stringify(stats));
+  localStorage.setItem('urble_stats', JSON.stringify(stats));
 }
