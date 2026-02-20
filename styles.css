@@ -1,16 +1,19 @@
+/* Urban-like typography: bold condensed title, clean sans body */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;600&display=swap');
+
 :root{
-  --bg:#0f1720;
-  --card:#071021;
-  --accent:#1f6feb;
-  --muted:#9fb4d6;
-  --text:#e6eef8;
-  --danger:#ff6b6b;
+  --bg:#ffffff; /* UD uses white background */
+  --card:#fff;
+  --accent:#111111;
+  --muted:#6b7280;
+  --text:#111827;
+  --accent-2:#ffcc00;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
-  font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   background:var(--bg);
   color:var(--text);
   -webkit-font-smoothing:antialiased;
@@ -25,31 +28,50 @@ header{
   gap:12px;
   align-items:center;
   justify-content:space-between;
-  background:linear-gradient(180deg, rgba(11,18,32,1), rgba(7,12,20,1));
-  border-bottom:1px solid rgba(18,32,51,0.6);
+  background:linear-gradient(180deg, rgba(255,255,255,1), rgba(250,250,250,1));
+  border-bottom:1px solid rgba(0,0,0,0.06);
 }
-.title h1{margin:0;font-size:20px}
-.title .tagline{margin:4px 0 0 0;font-size:12px;color:var(--muted);max-width:60vw}
+.title h1{
+  margin:0;
+  font-family: 'Anton', Impact, Haettenschweiler, 'Arial Black', sans-serif;
+  font-size:28px;
+  letter-spacing:1px;
+  color:var(--accent);
+}
+.title .tagline{
+  margin:6px 0 0 0;
+  font-size:12px;
+  color:var(--muted);
+  max-width:60vw;
+}
 #controls{display:flex;gap:8px;align-items:center}
 .nsfw-toggle{font-size:13px;color:var(--muted)}
-button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}
 button:active{transform:translateY(1px)}
 main{padding:16px;flex:1;display:flex;flex-direction:column;align-items:stretch;gap:12px;max-width:720px;margin:0 auto;width:100%}
-.card{background:var(--card);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.card{background:var(--card);padding:14px;border-radius:6px;border:1px solid rgba(0,0,0,0.04)}
 .hidden{display:none}
 .ad-text{color:var(--muted);margin:0 0 8px 0}
 .ad-controls{display:flex;justify-content:flex-end}
 .round-header{display:flex;flex-direction:column;gap:6px}
-#word-title{margin:0;font-size:20px}
+#word-title{margin:0;font-size:20px;font-weight:700;color:var(--accent)}
 #progress{font-size:13px;color:var(--muted)}
 /* Force vertical layout on all screen sizes */
 .options-vertical{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-.option{background:linear-gradient(180deg, rgba(20,32,51,0.9), rgba(12,20,32,0.9));padding:12px;border-radius:10px;cursor:pointer;border:1px solid transparent;width:100%}
-.option:hover{border-color:rgba(47,99,204,0.25)}
+.option{background:linear-gradient(180deg, #fff, #f8fafc);padding:12px;border-radius:6px;cursor:pointer;border:1px solid rgba(0,0,0,0.06);width:100%;text-align:left}
+.option:hover{background:#f1f5f9}
 .option.nsfw{filter:blur(0.6px);opacity:0.95}
 .review-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-.review-item{padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(10,16,24,0.6), rgba(8,12,18,0.6));border:1px solid rgba(255,255,255,0.02)}
-.review-item .word{font-weight:600;margin-bottom:6px}
+.review-item{padding:10px;border-radius:6px;background:#fff;border:1px solid rgba(0,0,0,0.04)}
+.review-item .word{font-weight:700;margin-bottom:6px}
 .review-item .choice{font-size:14px;color:var(--muted)}
 .result-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-pre{background:rgba(0,0,0,0.15);padding:10px;border-radius:8px;color:var(--muted);overflow:auto}
+pre{background:rgba(0,0,0,0.03);padding:10px;border-radius:6px;color:var(--muted);overflow:auto}
+@media (prefers-color-scheme: dark) {
+  :root{ --bg:#0b1220; --card:#071021; --text:#e6eef8; --muted:#9fb4d6; --accent:#e6eef8 }
+  header{ background:linear-gradient(180deg, rgba(7,12,20,1), rgba(11,18,32,1)); border-bottom:1px solid rgba(255,255,255,0.03) }
+  .card{ background:var(--card) }
+  .option{ background:linear-gradient(180deg, rgba(12,20,28,0.9), rgba(8,14,20,0.9)); border:1px solid rgba(255,255,255,0.02) }
+  .option:hover{ background: rgba(255,255,255,0.02) }
+  pre{ background: rgba(255,255,255,0.02) }
+}

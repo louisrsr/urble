@@ -23,7 +23,7 @@
 
     <main id="game-area">
       <section id="splash" class="card">
-        <p>Get Rekt!</p>
+        <p>Get rekt!</p>
       </section>
 
       <section id="ad" class="card hidden">
@@ -63,8 +63,8 @@
 
   <script src="app.js"></script>
   <script>
+    // Register service worker if available; failures ignored.
     if ('serviceWorker' in navigator) {
-      // register service worker but ignore failures silently
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     }
   </script>

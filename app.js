@@ -1,8 +1,8 @@
-// app.js — Urble (updated start behavior + debug)
+// app.js — Urble (fixed start + robust behavior + SW cleanup)
 (function(){
   const STATS_KEY = 'urble_stats';
   const ROUNDS = 5;
-  const AD_MS = 1200; // ad duration before auto-start
+  const AD_MS = 1200;
 
   // DOM
   const startBtn = document.getElementById('start-btn');
@@ -31,15 +31,21 @@
   let currentIndex = 0;
   let score = 0;
   let selections = [];
-  let adAutoStartTimer = null;
+  let adTimer = null;
 
-  // Helpers
+  // Unregister any old service workers to avoid stale caching (best-effort)
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{});
+    } catch(e) { /* ignore */ }
+  }
+
   function show(el){ el.classList.remove('hidden'); }
   function hide(el){ el.classList.add('hidden'); }
 
   async function loadWords() {
     try {
-      const res = await fetch('words.json');
+      const res = await fetch('words.json', {cache: 'no-store'});
       words = await res.json();
       window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
       window.__URBLE_DEBUG__.words = words;
@@ -67,9 +73,7 @@
     const shuffled = seededShuffle(pool, seed);
     const selected = shuffled.slice(0, Math.min(count, shuffled.length));
     return selected.map(item => {
-      // pick distractors that are likely related by reusing other real definitions
       const others = pool.filter(p => p.id !== item.id);
-      // try to pick distractors that share a word fragment (simple heuristic)
       const fragment = item.word.split(/\s+/)[0].toLowerCase().slice(0,4);
       const related = others.filter(o => o.word.toLowerCase().includes(fragment));
       const poolForDistractors = related.length >= 3 ? related.concat(others) : others;
@@ -88,28 +92,24 @@
     });
   }
 
-  // Start button: show ad and auto-start after AD_MS; skip still works
+  // Start button: show ad and auto-start after AD_MS; skip works immediately
   startBtn.addEventListener('click', async () => {
     hide(splash);
     show(ad);
     skipAd.disabled = true;
-    // load words if needed
     if (!words.length) await loadWords();
-    // prepare game state immediately so ad time is used to prepare
     gameState = { date: new Date().toISOString().slice(0,10), rounds: getDailyWords(ROUNDS, allowNSFW.checked) };
     selections = [];
-    // set auto-start timer
-    if (adAutoStartTimer) clearTimeout(adAutoStartTimer);
-    adAutoStartTimer = setTimeout(() => {
+    if (adTimer) clearTimeout(adTimer);
+    adTimer = setTimeout(() => {
       skipAd.disabled = false;
       hide(ad);
       startGame();
     }, AD_MS);
   });
 
-  // skip ad immediately
   skipAd.addEventListener('click', () => {
-    if (adAutoStartTimer) { clearTimeout(adAutoStartTimer); adAutoStartTimer = null; }
+    if (adTimer) { clearTimeout(adTimer); adTimer = null; }
     hide(ad);
     startGame();
   });
@@ -132,13 +132,15 @@
       btn.className = 'option';
       if (round.nsfw) btn.classList.add('nsfw');
       btn.textContent = opt.text;
-      btn.addEventListener('click', () => chooseOption(opt));
+      btn.addEventListener('click', () => chooseOption(opt, btn));
       optionsEl.appendChild(btn);
     });
     progressEl.textContent = `Round ${currentIndex + 1} / ${gameState.rounds.length}`;
   }
 
-  function chooseOption(opt) {
+  function chooseOption(opt, btn) {
+    // immediate visual feedback
+    btn.style.outline = opt.correct ? '3px solid rgba(34,197,94,0.12)' : '3px solid rgba(239,68,68,0.12)';
     const round = gameState.rounds[currentIndex];
     const chosenText = opt.text;
     const correctOpt = round.options.find(o => o.correct);
@@ -146,18 +148,20 @@
     const wasCorrect = !!opt.correct;
     selections.push({ word: round.word, chosen: chosenText, correct: correctText, correctFlag: wasCorrect, nsfw: round.nsfw });
     if (wasCorrect) score += 1;
-    currentIndex += 1;
-    if (currentIndex >= gameState.rounds.length) endGame();
-    else renderRound();
+    // small delay so user sees feedback
+    setTimeout(() => {
+      currentIndex += 1;
+      if (currentIndex >= gameState.rounds.length) endGame();
+      else renderRound();
+    }, 350);
   }
 
   function endGame() {
     hide(roundEl);
     show(ad);
     skipAd.disabled = false;
-    // show ad then review; auto-start of review after AD_MS
-    if (adAutoStartTimer) clearTimeout(adAutoStartTimer);
-    adAutoStartTimer = setTimeout(() => {
+    if (adTimer) clearTimeout(adTimer);
+    adTimer = setTimeout(() => {
       hide(ad);
       show(resultEl);
       resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
@@ -165,9 +169,8 @@
       renderReview();
       saveStats(score, gameState.date);
     }, AD_MS);
-    // allow skip to immediately show review
     skipAd.onclick = () => {
-      if (adAutoStartTimer) { clearTimeout(adAutoStartTimer); adAutoStartTimer = null; }
+      if (adTimer) { clearTimeout(adTimer); adTimer = null; }
       hide(ad);
       show(resultEl);
       resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
@@ -191,11 +194,8 @@
       const correctEl = document.createElement('div');
       correctEl.className = 'choice';
       correctEl.innerHTML = `<strong>Correct:</strong> ${s.correct}`;
-      if (s.correctFlag) {
-        item.style.border = '1px solid rgba(34,197,94,0.12)';
-      } else {
-        item.style.border = '1px solid rgba(239,68,68,0.12)';
-      }
+      if (s.correctFlag) item.style.border = '1px solid rgba(34,197,94,0.12)';
+      else item.style.border = '1px solid rgba(239,68,68,0.12)';
       item.appendChild(wordEl);
       item.appendChild(chosenEl);
       item.appendChild(correctEl);
@@ -203,9 +203,7 @@
     });
   }
 
-  playAgain.addEventListener('click', () => {
-    startBtn.click();
-  });
+  playAgain.addEventListener('click', () => startBtn.click());
 
   shareBtn.addEventListener('click', async () => {
     const text = `I scored ${score}/${ROUNDS} on Urble — Guess the Urban Dictionary definition! Can you beat me?`;
