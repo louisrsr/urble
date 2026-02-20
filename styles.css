@@ -42,6 +42,7 @@ main{padding:16px;flex:1;display:flex;flex-direction:column;align-items:stretch;
 .round-header{display:flex;flex-direction:column;gap:6px}
 #word-title{margin:0;font-size:20px}
 #progress{font-size:13px;color:var(--muted)}
+/* Always vertical options for phone-first layout */
 .options-vertical{display:flex;flex-direction:column;gap:10px;margin-top:12px}
 .option{background:linear-gradient(180deg, rgba(20,32,51,0.9), rgba(12,20,32,0.9));padding:12px;border-radius:10px;cursor:pointer;border:1px solid transparent}
 .option:hover{border-color:rgba(47,99,204,0.25)}
@@ -54,8 +55,3 @@ main{padding:16px;flex:1;display:flex;flex-direction:column;align-items:stretch;
 .review-item .choice{font-size:14px;color:var(--muted)}
 .result-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 pre{background:rgba(0,0,0,0.15);padding:10px;border-radius:8px;color:var(--muted);overflow:auto}
-@media(min-width:720px){
-  .title .tagline{max-width:40vw}
-  .options-vertical{flex-direction:row;flex-wrap:wrap}
-  .option{flex:1;min-width:45%}
-}

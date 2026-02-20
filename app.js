@@ -1,4 +1,4 @@
-// Urble static client: mobile-first, end-of-game review, share score
+// Urble static client (updated): mobile-first, reliable saving, relative fetch
 const startBtn = document.getElementById('start-btn');
 const allowNSFW = document.getElementById('allow-nsfw');
 const statsBtn = document.getElementById('stats-btn');
@@ -24,14 +24,15 @@ let gameState = null;
 let currentIndex = 0;
 let score = 0;
 const ROUNDS = 5;
-let selections = []; // store {word, chosen, correct}
+let selections = [];
+const STATS_KEY = 'urble_stats'; // single consistent key
 
 function show(el){ el.classList.remove('hidden'); }
 function hide(el){ el.classList.add('hidden'); }
 
 async function loadWords() {
   try {
-    const res = await fetch('/words.json');
+    const res = await fetch('words.json'); // relative path for GitHub Pages
     words = await res.json();
   } catch (e) {
     words = [];
@@ -101,7 +102,7 @@ function renderRound() {
   const round = gameState.rounds[currentIndex];
   wordTitle.textContent = round.word;
   optionsEl.innerHTML = '';
-  round.options.forEach((opt, i) => {
+  round.options.forEach((opt) => {
     const btn = document.createElement('div');
     btn.className = 'option';
     if (round.nsfw) btn.classList.add('nsfw');
@@ -166,7 +167,6 @@ function renderReview() {
 }
 
 playAgain.addEventListener('click', () => {
-  // restart daily (same day will be same)
   startBtn.click();
 });
 
@@ -194,7 +194,7 @@ function copyToClipboard(text) {
 }
 
 statsBtn.addEventListener('click', () => {
-  const stats = JSON.parse(localStorage.getItem('urble_stats') || '[]');
+  const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
   statsJson.textContent = JSON.stringify(stats, null, 2);
   show(statsPanel);
 });
@@ -202,7 +202,10 @@ statsBtn.addEventListener('click', () => {
 closeStats.addEventListener('click', () => hide(statsPanel));
 
 function saveStats(score, date) {
-  const stats = JSON.parse(localStorage.getItem('urble_stats') || '[]');
+  const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
   stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-  localStorage.setItem('urble_stats', JSON.stringify(stats));
+  localStorage.setItem(STATS_KEY, JSON.stringify(stats));
 }
+
+// Helper: unregister service worker (call from console if needed)
+// navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
