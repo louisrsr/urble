@@ -1,4 +1,7 @@
-/* ====== Base Reset ====== */
+/* =========================
+   URBLE — Apple x Urban UI
+========================= */
+
 *,
 *::before,
 *::after {
@@ -6,61 +9,88 @@
 }
 
 :root {
-  --bg: #f6f7fb;
-  --card: #ffffff;
-  --text: #111318;
-  --muted: #6b7280;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --border: #e5e7eb;
-  --correct: #16a34a;
-  --wrong: #dc2626;
-}
-
-[data-theme="dark"] {
-  --bg: #0f1115;
-  --card: #171923;
-  --text: #f3f4f6;
-  --muted: #9ca3af;
-  --accent: #818cf8;
-  --accent-hover: #6366f1;
-  --border: #262a33;
+  --bg: #000000;
+  --card: #111111;
+  --card-light: #1c1c1e;
+  --text: #ffffff;
+  --muted: #9a9aa0;
+  --accent: #f8df00; /* Urban yellow */
+  --accent-dark: #d4c000;
+  --border: #2a2a2c;
+  --correct: #30d158;
+  --wrong: #ff453a;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "SF Pro Display", system-ui, sans-serif;
+
   display: flex;
   justify-content: center;
-  padding: 24px 16px;
-  min-height: 100vh;
 }
 
-/* ====== App Layout ====== */
-
+/* Force vertical mobile layout even on desktop */
 #app {
   width: 100%;
-  max-width: 620px;
+  max-width: 430px; /* iPhone width */
+  min-height: 100vh;
+  padding: 24px 18px 40px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ====== Header ====== */
+/* =========================
+   HEADER
+========================= */
 
 header {
-  margin-bottom: 24px;
+  text-align: center;
+  margin-bottom: 28px;
 }
 
 .title h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: 2.4rem;
+  font-weight: 700;
   letter-spacing: -1px;
 }
 
 .tagline {
   margin-top: 6px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--muted);
 }
 
 #controls {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.card {
+  background: var(--card-light);
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  transition: 0.2s ease;
+}
+
+.hidden {
+  display: none;
+}
+
+/* =========================
+   BUTTONS (Apple-style)
+========================= */
+
+button {
+  appearance: none;
