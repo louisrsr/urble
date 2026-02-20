@@ -2,12 +2,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;600&display=swap');
 
 :root{
-  --bg:#ffffff; /* UD uses white background */
+  --bg:#ffffff;
   --card:#fff;
   --accent:#111111;
   --muted:#6b7280;
   --text:#111827;
   --accent-2:#ffcc00;
+  --correct: #16a34a;
+  --wrong: #ef4444;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -66,6 +68,9 @@ main{padding:16px;flex:1;display:flex;flex-direction:column;align-items:stretch;
 .review-item .word{font-weight:700;margin-bottom:6px}
 .review-item .choice{font-size:14px;color:var(--muted)}
 .result-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.cheeky{margin-top:8px;font-weight:600;color:var(--muted)}
+.correct-badge{color:var(--correct);font-weight:700}
+.wrong-badge{color:var(--wrong);font-weight:700}
 pre{background:rgba(0,0,0,0.03);padding:10px;border-radius:6px;color:var(--muted);overflow:auto}
 @media (prefers-color-scheme: dark) {
   :root{ --bg:#0b1220; --card:#071021; --text:#e6eef8; --muted:#9fb4d6; --accent:#e6eef8 }

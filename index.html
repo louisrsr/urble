@@ -23,7 +23,7 @@
 
     <main id="game-area">
       <section id="splash" class="card">
-        <p>Get rekt!</p>
+        <p>Short sessions, big laughs. Tap Start to play today’s round.</p>
       </section>
 
       <section id="ad" class="card hidden">
@@ -45,6 +45,8 @@
         <h2 id="result-text"></h2>
         <p id="score-text"></p>
 
+        <div id="cheeky" class="cheeky"></div>
+
         <div id="review" class="review-list"></div>
 
         <div class="result-actions">
@@ -63,7 +65,6 @@
 
   <script src="app.js"></script>
   <script>
-    // Register service worker if available; failures ignored.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(()=>{});
     }

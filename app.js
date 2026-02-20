@@ -1,4 +1,4 @@
-// app.js — Urble (fixed: removed duplicate STATS_KEY, robust start/save behavior)
+// app.js — Urble final: vertical layout, reliable start, review with cheeky messages
 (function(){
   const STATS_KEY = 'urble_stats';
   const ROUNDS = 5;
@@ -18,6 +18,7 @@
   const resultEl = document.getElementById('result');
   const resultText = document.getElementById('result-text');
   const scoreText = document.getElementById('score-text');
+  const cheekyEl = document.getElementById('cheeky');
   const reviewEl = document.getElementById('review');
   const playAgain = document.getElementById('play-again');
   const shareBtn = document.getElementById('share-score');
@@ -32,6 +33,16 @@
   let score = 0;
   let selections = [];
   let adTimer = null;
+
+  // Cheeky messages by score
+  const MESSAGES = {
+    0: "0/5 — Oof. You just discovered a new dialect of confusion.",
+    1: "1/5 — At least you tried. Urban mysteries remain unsolved.",
+    2: "2/5 — Not bad. You’re on the outskirts of the vibe.",
+    3: "3/5 — Solid. You know your slang, kind of.",
+    4: "4/5 — Impressive. You’re practically a local.",
+    5: "5/5 — Legendary. Urble champion. You speak fluent street."
+  };
 
   // Try to unregister old service workers (best-effort)
   if ('serviceWorker' in navigator) {
@@ -107,6 +118,7 @@
     }, AD_MS);
   });
 
+  // skip ad immediately
   skipAd.addEventListener('click', () => {
     if (adTimer) { clearTimeout(adTimer); adTimer = null; }
     hide(ad);
@@ -138,7 +150,8 @@
   }
 
   function chooseOption(opt, btn) {
-    btn.style.outline = opt.correct ? '3px solid rgba(34,197,94,0.12)' : '3px solid rgba(239,68,68,0.12)';
+    // immediate visual feedback
+    btn.style.outline = opt.correct ? `3px solid rgba(22,163,74,0.12)` : `3px solid rgba(239,68,68,0.12)`;
     const round = gameState.rounds[currentIndex];
     const chosenText = opt.text;
     const correctOpt = round.options.find(o => o.correct);
@@ -146,6 +159,7 @@
     const wasCorrect = !!opt.correct;
     selections.push({ word: round.word, chosen: chosenText, correct: correctText, correctFlag: wasCorrect, nsfw: round.nsfw });
     if (wasCorrect) score += 1;
+    // small delay so user sees feedback
     setTimeout(() => {
       currentIndex += 1;
       if (currentIndex >= gameState.rounds.length) endGame();
@@ -163,6 +177,7 @@
       show(resultEl);
       resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
       scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
+      cheekyEl.textContent = MESSAGES[score] || '';
       renderReview();
       saveStats(score, gameState.date);
     }, AD_MS);
@@ -172,6 +187,7 @@
       show(resultEl);
       resultText.textContent = score === gameState.rounds.length ? 'Perfect!' : 'Finished';
       scoreText.textContent = `Score: ${score} / ${gameState.rounds.length}`;
+      cheekyEl.textContent = MESSAGES[score] || '';
       renderReview();
       saveStats(score, gameState.date);
     };
@@ -191,7 +207,8 @@
       const correctEl = document.createElement('div');
       correctEl.className = 'choice';
       correctEl.innerHTML = `<strong>Correct:</strong> ${s.correct}`;
-      item.style.border = s.correctFlag ? '1px solid rgba(34,197,94,0.12)' : '1px solid rgba(239,68,68,0.12)';
+      if (s.correctFlag) item.style.border = '1px solid rgba(22,163,74,0.12)';
+      else item.style.border = '1px solid rgba(239,68,68,0.12)';
       item.appendChild(wordEl);
       item.appendChild(chosenEl);
       item.appendChild(correctEl);
@@ -225,7 +242,7 @@
   }
 
   statsBtn.addEventListener('click', () => {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
+    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
     statsJson.textContent = JSON.stringify(stats, null, 2);
     show(statsPanel);
   });
@@ -233,21 +250,21 @@
   closeStats.addEventListener('click', () => hide(statsPanel));
 
   function saveStats(score, date) {
-    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
+    const stats = JSON.parse(localStorage.getItem(STATS_KEY()) || '[]');
     stats.push({ date, score, rounds: ROUNDS, ts: new Date().toISOString() });
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(STATS_KEY(), JSON.stringify(stats));
     window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
     window.__URBLE_DEBUG__.lastSaved = { date, score };
   }
 
-  function STATS_KEY(){ return STATS_KEY; } // simple accessor
+  function STATS_KEY(){ return STATS_KEY; } // accessor
 
   // Debug helper
   window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
   window.__URBLE_DEBUG__.info = () => ({
     url: location.href,
     wordsLoaded: (window.__URBLE_DEBUG__.words || []).length,
-    stats: JSON.parse(localStorage.getItem(STATS_KEY) || '[]'),
+    stats: JSON.parse(localStorage.getItem(STATS_KEY()) || '[]'),
     swAvailable: typeof navigator.serviceWorker !== 'undefined'
   });
 
