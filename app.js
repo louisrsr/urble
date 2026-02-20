@@ -1,6 +1,7 @@
-// app.js — Minimal robust Urble client
+// app.js — Urble with theme toggle, vertical enforcement, share fallback, review and stats
 (function(){
   const STATS_KEY = 'urble_stats';
+  const THEME_KEY = 'urble_theme';
   const ROUNDS = 5;
   const AD_MS = 800;
 
@@ -19,6 +20,13 @@
   const resultText = $('#result-text');
   const cheekyEl = $('#cheeky');
   const reviewEl = $('#review');
+  const themeToggle = $('#theme-toggle');
+  const shareBtn = $('#share-score');
+  const statsBtn = $('#stats-btn');
+  const statsPanel = $('#stats');
+  const statsJson = $('#stats-json');
+  const closeStats = $('#close-stats');
+  const playAgain = $('#play-again');
 
   let words = [];
   let game = null;
@@ -36,12 +44,46 @@
     5: "5/5 — Legendary. Urble champion. You speak fluent street."
   };
 
-  function show(el){ el && el.classList.remove('hidden'); }
-  function hide(el){ el && el.classList.add('hidden'); }
+  /* Theme */
+  function applyTheme(theme){
+    if(theme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
+    if(themeToggle) themeToggle.textContent = theme === 'dark' ? '🌞' : '🌗';
+  }
+  function initTheme(){
+    const saved = localStorage.getItem(THEME_KEY);
+    if(saved) applyTheme(saved);
+    else {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    }
+    if(themeToggle){
+      themeToggle.addEventListener('click', ()=>{
+        const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+    }
+  }
 
+  /* Vertical runtime enforcement */
+  function enforceVerticalRuntime(){
+    const c = optionsEl;
+    if(!c) return;
+    c.style.display = 'flex';
+    c.style.flexDirection = 'column';
+    c.style.alignItems = 'stretch';
+    Array.from(c.children).forEach(ch => {
+      ch.style.display = 'block';
+      ch.style.width = '100%';
+      ch.style.boxSizing = 'border-box';
+    });
+  }
+
+  /* Load words */
   async function loadWords(){
     try {
-      const r = await fetch('words.json', {cache:'no-store'});
+      const r = await fetch('words.json', { cache: 'no-store' });
       words = await r.json();
     } catch(e){
       words = [];
@@ -70,23 +112,21 @@
     });
   }
 
-  // Start button handler
-  function startHandler(){
-    hide(splash);
-    show(ad);
-    skipAd.disabled = true;
-    (async ()=>{
-      if(!words.length) await loadWords();
-      game = { rounds: buildDaily(ROUNDS, allowNSFW.checked), date: new Date().toISOString().slice(0,10) };
-      picks = []; idx = 0; score = 0;
-      if(adTimer) clearTimeout(adTimer);
-      adTimer = setTimeout(()=>{ skipAd.disabled=false; hide(ad); startRound(); }, AD_MS);
-    })();
+  /* UI helpers */
+  function show(el){ el && el.classList.remove('hidden'); }
+  function hide(el){ el && el.classList.add('hidden'); }
+
+  /* Start flow */
+  async function startHandler(){
+    hide(splash); show(ad); skipAd.disabled = true;
+    if(!words.length) await loadWords();
+    game = { rounds: buildDaily(ROUNDS, allowNSFW.checked), date: new Date().toISOString().slice(0,10) };
+    picks = []; idx = 0; score = 0;
+    if(adTimer) clearTimeout(adTimer);
+    adTimer = setTimeout(()=>{ skipAd.disabled=false; hide(ad); startRound(); }, AD_MS);
   }
 
-  function startRound(){
-    show(roundEl); hide(resultEl); renderRound();
-  }
+  function startRound(){ show(roundEl); hide(resultEl); renderRound(); enforceVerticalRuntime(); }
 
   function renderRound(){
     const r = game.rounds[idx];
@@ -97,10 +137,13 @@
       el.className = 'option';
       if(r.nsfw) el.classList.add('nsfw');
       el.textContent = opt.text;
+      el.tabIndex = 0;
       el.addEventListener('click', ()=> chooseOption(opt, el));
+      el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' ') chooseOption(opt, el); });
       optionsEl.appendChild(el);
     });
     progressEl.textContent = `Round ${idx+1} / ${game.rounds.length}`;
+    enforceVerticalRuntime();
   }
 
   function chooseOption(opt, el){
@@ -132,6 +175,7 @@
       it.style.border = p.ok ? '1px solid rgba(22,163,74,0.12)' : '1px solid rgba(239,68,68,0.12)';
       reviewEl.appendChild(it);
     });
+    enforceVerticalRuntime();
   }
 
   function saveStats(){
@@ -142,16 +186,52 @@
     }catch(e){}
   }
 
-  // Attach handlers safely (if element missing, log)
+  /* Share handler (robust) */
+  function copyToClipboard(text){
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    return Promise.resolve();
+  }
+  async function shareHandler(){
+    const scoreEl = document.getElementById('score-text');
+    const scoreTextLocal = scoreEl ? scoreEl.textContent.trim() : `I scored ${score}/${ROUNDS} on Urble!`;
+    const text = `${scoreTextLocal} — Can you beat my Urble score? ${location.href}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Urble score', text, url: location.href }); return; }
+      catch(e){ /* fallback */ }
+    }
+    await copyToClipboard(text);
+    const notice = document.createElement('div');
+    notice.textContent = 'Score copied to clipboard';
+    Object.assign(notice.style, { position:'fixed', bottom:'18px', left:'50%', transform:'translateX(-50%)', background:'#111', color:'#fff', padding:'8px 12px', borderRadius:'8px', zIndex:9999, opacity:0.95 });
+    document.body.appendChild(notice);
+    setTimeout(()=>notice.remove(), 1600);
+  }
+
+  /* Stats panel */
+  function openStats(){
+    const stats = JSON.parse(localStorage.getItem(STATS_KEY) || '[]');
+    statsJson.textContent = JSON.stringify(stats, null, 2);
+    show(statsPanel);
+  }
+
+  /* Attach handlers */
   if(startBtn) startBtn.addEventListener('click', startHandler);
-  else console.error('Start button (#start-btn) not found in DOM');
-
   if(skipAd) skipAd.addEventListener('click', ()=>{ if(adTimer){ clearTimeout(adTimer); adTimer=null; } hide(ad); startRound(); });
+  if(shareBtn) shareBtn.addEventListener('click', shareHandler);
+  if(statsBtn) statsBtn.addEventListener('click', openStats);
+  if(closeStats) closeStats.addEventListener('click', ()=> hide(statsPanel));
+  if(playAgain) playAgain.addEventListener('click', ()=> startHandler());
 
-  // Expose debug helper
+  /* Theme init and initial load */
+  initTheme();
   window.__URBLE_DEBUG__ = window.__URBLE_DEBUG__ || {};
-  window.__URBLE_DEBUG__.info = ()=>({ words: words.length, stats: JSON.parse(localStorage.getItem(STATS_KEY)||'[]') });
+  window.__URBLE_DEBUG__.info = ()=>({ words: words.length, stats: JSON.parse(localStorage.getItem(STATS_KEY)||'[]'), theme: localStorage.getItem(THEME_KEY) });
 
-  // initial load attempt
   loadWords();
 })();

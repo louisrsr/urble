@@ -3,64 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <title>Urble — Guess the Urban Dictionary definition!</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <header>
-      <div class="title">
-        <h1>Urble</h1>
-        <p class="tagline">Guess the Urban Dictionary definition! 4 choices. 5 rounds. New words daily. Challenge your friends by sharing your score!</p>
-      </div>
-      <div id="controls">
-        <label class="nsfw-toggle"><input type="checkbox" id="allow-nsfw"> Show NSFW</label>
-        <button id="start-btn">Start Daily Game</button>
-        <button id="stats-btn">Stats</button>
-      </div>
-    </header>
-
-    <main id="game-area">
-      <section id="splash" class="card">
-        <p>Short sessions, big laughs. Tap Start to play today’s round.</p>
-      </section>
-
-      <section id="ad" class="card hidden">
-        <p class="ad-text">Advertisement (demo)</p>
-        <div class="ad-controls">
-          <button id="skip-ad" disabled>Skip</button>
+  <div id="app-shell">
+    <div id="app">
+      <header>
+        <div class="title">
+          <h1>Urble</h1>
+          <p class="tagline">Guess the Urban Dictionary definition! 4 choices. 5 rounds. New words daily.</p>
         </div>
-      </section>
 
-      <section id="round" class="card hidden">
-        <div class="round-header">
-          <h2 id="word-title"></h2>
-          <div id="progress"></div>
+        <div id="controls">
+          <button id="theme-toggle" aria-label="Toggle theme">🌗</button>
+          <label class="nsfw-toggle"><input type="checkbox" id="allow-nsfw"> Show NSFW</label>
+          <button id="start-btn">Start Daily Game</button>
+          <button id="stats-btn">Stats</button>
         </div>
-        <div id="options" class="options-vertical"></div>
-      </section>
+      </header>
 
-      <section id="result" class="card hidden">
-        <h2 id="result-text"></h2>
-        <p id="score-text"></p>
+      <main id="game-area">
+        <section id="splash" class="card">
+          <p>Get rekt!</p>
+        </section>
 
-        <div id="cheeky" class="cheeky"></div>
+        <section id="ad" class="card hidden">
+          <p class="ad-text">Advertisement (demo)</p>
+          <div class="ad-controls">
+            <button id="skip-ad" disabled>Skip</button>
+          </div>
+        </section>
 
-        <div id="review" class="review-list"></div>
+        <section id="round" class="card hidden">
+          <div class="round-header">
+            <h2 id="word-title"></h2>
+            <div id="progress"></div>
+          </div>
+          <div id="options" class="options-vertical" role="list"></div>
+        </section>
 
-        <div class="result-actions">
-          <button id="share-score">Share Score</button>
-          <button id="play-again">Play Again</button>
-        </div>
-      </section>
+        <section id="result" class="card hidden">
+          <h2 id="result-text"></h2>
+          <p id="score-text"></p>
 
-      <section id="stats" class="card hidden">
-        <h2>Stats</h2>
-        <pre id="stats-json"></pre>
-        <button id="close-stats">Close</button>
-      </section>
-    </main>
+          <div id="cheeky" class="cheeky"></div>
+
+          <div id="review" class="review-list" aria-live="polite"></div>
+
+          <div class="result-actions">
+            <button id="share-score">Share Score</button>
+            <button id="play-again">Play Again</button>
+          </div>
+        </section>
+
+        <section id="stats" class="card hidden">
+          <h2>Stats</h2>
+          <pre id="stats-json"></pre>
+          <button id="close-stats">Close</button>
+        </section>
+      </main>
+    </div>
   </div>
 
   <script src="app.js"></script>
