@@ -1,4 +1,4 @@
-// Urble static client (updated): mobile-first, reliable saving, relative fetch
+// Urble final client: vertical layout, reliable saving, relative fetch, review + share
 const startBtn = document.getElementById('start-btn');
 const allowNSFW = document.getElementById('allow-nsfw');
 const statsBtn = document.getElementById('stats-btn');
@@ -25,7 +25,7 @@ let currentIndex = 0;
 let score = 0;
 const ROUNDS = 5;
 let selections = [];
-const STATS_KEY = 'urble_stats'; // single consistent key
+const STATS_KEY = 'urble_stats';
 
 function show(el){ el.classList.remove('hidden'); }
 function hide(el){ el.classList.add('hidden'); }
@@ -207,5 +207,6 @@ function saveStats(score, date) {
   localStorage.setItem(STATS_KEY, JSON.stringify(stats));
 }
 
-// Helper: unregister service worker (call from console if needed)
+// If you see old behavior after updating files, unregister the service worker:
+// Open browser console and run:
 // navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
