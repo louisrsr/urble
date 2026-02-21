@@ -7,7 +7,61 @@ document.addEventListener("DOMContentLoaded", () => {
   let score = 0;
   let results = [];
 
-  const words = [ /* same word list as before */ ];
+  /* =====================
+     WORD DATA
+  ===================== */
+
+  const words = [
+    {
+      word: "Touch grass",
+      correct: "An insult telling someone to go outside and stop being online.",
+      wrong: [
+        "A gardening technique.",
+        "A dance move.",
+        "A vegan trend."
+      ]
+    },
+    {
+      word: "Rizz",
+      correct: "Short for charisma, especially in flirting.",
+      wrong: [
+        "An energy drink.",
+        "A gaming tactic.",
+        "A crypto coin."
+      ]
+    },
+    {
+      word: "Mid",
+      correct: "Something mediocre or average.",
+      wrong: [
+        "Extremely good.",
+        "A yoga pose.",
+        "A fashion brand."
+      ]
+    },
+    {
+      word: "Delulu",
+      correct: "Playfully delusional.",
+      wrong: [
+        "A cartoon character.",
+        "A dessert.",
+        "A sneaker brand."
+      ]
+    },
+    {
+      word: "NPC",
+      correct: "Someone acting robotic or lacking originality.",
+      wrong: [
+        "A political party.",
+        "A coding language.",
+        "A music genre."
+      ]
+    }
+  ];
+
+  /* =====================
+     ELEMENTS
+  ===================== */
 
   const splash = document.getElementById("splash");
   const ad = document.getElementById("ad");
@@ -16,9 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const startBtn = document.getElementById("start-btn");
   const statsBtn = document.getElementById("stats-btn");
-  const statsModal = document.getElementById("stats-modal");
-  const statsContent = document.getElementById("stats-content");
-
   const skipAdBtn = document.getElementById("skip-ad");
 
   const wordTitle = document.getElementById("word-title");
@@ -46,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =====================
-     START GAME
+     START BUTTON
   ===================== */
 
   startBtn.onclick = () => {
@@ -71,6 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   };
 
+  /* =====================
+     GAME FLOW
+  ===================== */
+
   function startGame() {
     currentRound = 0;
     score = 0;
@@ -90,7 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     wordTitle.textContent = data.word;
     progressText.textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
-    progressFill.style.width = `${(currentRound / TOTAL_ROUNDS) * 100}%`;
+    progressFill.style.width =
+      `${(currentRound / TOTAL_ROUNDS) * 100}%`;
 
     const answers = [data.correct, ...data.wrong]
       .sort(() => Math.random() - 0.5);
@@ -101,7 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const btn = document.createElement("button");
       btn.textContent = answer;
 
-      btn.onclick = () => handleAnswer(btn, answer === data.correct, data.correct);
+      btn.onclick = () => {
+        handleAnswer(btn, answer === data.correct, data.correct);
+      };
 
       optionsContainer.appendChild(btn);
     });
@@ -112,6 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     buttons.forEach(btn => {
       btn.disabled = true;
+
       if (btn.textContent === correctText) {
         btn.classList.add("option-correct");
       }
@@ -143,62 +202,12 @@ document.addEventListener("DOMContentLoaded", () => {
     updateStats();
   }
 
+  /* =====================
+     STATS UPDATE
+  ===================== */
+
   function updateStats() {
     const stats = getStats();
 
     stats.gamesPlayed++;
-    if (score >= 3) stats.wins++;
-
-    if (stats.lastPlayed) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yDate = yesterday.toISOString().split("T")[0];
-
-      if (stats.lastPlayed === yDate) {
-        stats.currentStreak++;
-      } else {
-        stats.currentStreak = 1;
-      }
-    } else {
-      stats.currentStreak = 1;
-    }
-
-    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-    stats.lastPlayed = today;
-
-    saveStats(stats);
-  }
-
-  /* =====================
-     SHARE
-  ===================== */
-
-  document.getElementById("share-score").onclick = () => {
-    let grid = `Urble ${score}/5\n\n`;
-    results.forEach(r => grid += r === "correct" ? "🟦" : "⬛");
-    navigator.clipboard.writeText(grid);
-    alert("Copied to clipboard!");
-  };
-
-  /* =====================
-     STATS MODAL
-  ===================== */
-
-  statsBtn.onclick = () => {
-    const stats = getStats();
-
-    statsContent.innerHTML = `
-      <p>Games Played: ${stats.gamesPlayed}</p>
-      <p>Wins (3+ correct): ${stats.wins}</p>
-      <p>Current Streak: ${stats.currentStreak}</p>
-      <p>Max Streak: ${stats.maxStreak}</p>
-    `;
-
-    statsModal.classList.remove("hidden");
-  };
-
-  document.getElementById("close-stats").onclick = () => {
-    statsModal.classList.add("hidden");
-  };
-
-});
+    if (score >= 3)
