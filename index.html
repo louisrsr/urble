@@ -14,28 +14,26 @@
         <h1>Urble</h1>
         <p class="tagline">Guess the Urban Dictionary definition</p>
       </div>
+
       <button id="start-btn">Start Daily Game</button>
+      <button id="stats-btn">Stats</button>
     </header>
 
     <main>
 
-      <!-- Progress Bar -->
       <div id="progress-bar" class="hidden">
         <div id="progress-fill"></div>
       </div>
 
-      <!-- Splash -->
       <section id="splash" class="card">
         <p>Get rekt.</p>
       </section>
 
-      <!-- Ad -->
       <section id="ad" class="card hidden">
         <p>Advertisement</p>
         <button id="skip-ad" disabled>Skip</button>
       </section>
 
-      <!-- Round -->
       <section id="round" class="card hidden">
         <div class="round-header">
           <h2 id="word-title"></h2>
@@ -44,13 +42,21 @@
         <div id="options" class="options-grid"></div>
       </section>
 
-      <!-- Result -->
       <section id="result" class="card hidden">
         <h2 id="result-text"></h2>
         <p id="score-text"></p>
         <button id="share-score">Share</button>
-        <button id="play-again">Play Again</button>
       </section>
-<script src="app.js" defer></script>
+
+      <section id="stats-modal" class="card hidden">
+        <h2>Your Stats</h2>
+        <div id="stats-content"></div>
+        <button id="close-stats">Close</button>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js" defer></script>
 </body>
-    </html>
+</html>
