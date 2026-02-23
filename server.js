@@ -5,12 +5,11 @@ const fetch = require('node-fetch');
 const NodeCache = require('node-cache');
 const cron = require('node-cron');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
+const db = require('./db');
 
 const app = express();
 app.use(express.json());
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const cache = new NodeCache({ stdTTL: 60 * 10 });
 
 const ROUNDS = parseInt(process.env.ROUNDS || '5', 10);
@@ -18,7 +17,7 @@ const CHOICES_PER_ROUND = parseInt(process.env.CHOICES_PER_ROUND || '4', 10);
 const TIMEZONE = process.env.TZ || 'UTC';
 const CURATED_FALLBACK = (process.env.CURATED || 'yeet,stan,ghosting,flex,salty,woke,clout,simp,thirsty,lit,sus,vibe').split(',');
 
-// Helper: fetch Urban Dictionary definitions with caching
+// fetch Urban Dictionary with caching
 async function fetchUrban(term) {
   const key = `ud:${term.toLowerCase()}`;
   const cached = cache.get(key);
@@ -35,7 +34,7 @@ async function fetchUrban(term) {
   }
 }
 
-// Simple distractor generator (replace with OpenAI if desired)
+// simple distractors
 function simpleDistractors(word, correct, count) {
   const templates = [
     `A slang term meaning "${word}" used to describe someone who is overly dramatic.`,
@@ -51,46 +50,20 @@ function simpleDistractors(word, correct, count) {
   return out;
 }
 
-// Pick an unused word from words table; fallback to curated list
+// pick an unused word from words table; fallback to curated list
 async function pickUnusedWord() {
-  const client = await pool.connect();
-  try {
-    const res = await client.query(`
-      SELECT w.id, w.word FROM words w
-      LEFT JOIN words_used wu ON wu.word_id = w.id
-      WHERE wu.id IS NULL
-      ORDER BY random()
-      LIMIT 1
-    `);
-    if (res.rows.length) return res.rows[0];
-  } finally {
-    client.release();
-  }
+  const row = await db.getUnusedWord();
+  if (row) return row;
   const pick = CURATED_FALLBACK[Math.floor(Math.random() * CURATED_FALLBACK.length)];
   return { id: null, word: pick };
 }
 
-// Mark a word as used for a date
+// mark word used
 async function markWordUsed(wordId, word, usedOn) {
-  const client = await pool.connect();
-  try {
-    if (wordId) {
-      await client.query(
-        `INSERT INTO words_used (word_id, word, used_on) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`,
-        [wordId, word, usedOn]
-      );
-    } else {
-      await client.query(
-        `INSERT INTO words_used (word, used_on) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
-        [word, usedOn]
-      );
-    }
-  } finally {
-    client.release();
-  }
+  await db.insertWordUsed(wordId, word, usedOn);
 }
 
-// Build a single round
+// build one round
 async function buildRound(word) {
   const ud = await fetchUrban(word);
   const list = (ud && ud.list) || [];
@@ -112,7 +85,7 @@ async function buildRound(word) {
   return { word, choices, correctChoiceId };
 }
 
-// Build a full game for a date
+// build full game for a date
 async function buildGameForDate(gameDate) {
   const rounds = [];
   const usedWordsToday = new Set();
@@ -139,28 +112,18 @@ async function buildGameForDate(gameDate) {
   }
 
   const game = { gameId: uuidv4(), rounds, createdAt: new Date().toISOString() };
-  const client = await pool.connect();
-  try {
-    await client.query(
-      `INSERT INTO games (id, game_date, payload) VALUES ($1,$2,$3) ON CONFLICT (game_date) DO NOTHING`,
-      [game.gameId, gameDate, game]
-    );
-  } finally {
-    client.release();
-  }
+  await db.insertGame(game.gameId, gameDate, game);
   return game;
 }
 
-// Scheduler: run at midnight in configured timezone
+// scheduler at midnight in configured timezone
 cron.schedule('0 0 * * *', async () => {
   try {
     const gameDate = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
-    const client = await pool.connect();
-    try {
-      const r = await client.query('SELECT id FROM games WHERE game_date = $1', [gameDate]);
-      if (r.rows.length) return;
-    } finally {
-      client.release();
+    const exists = await db.getGameByDate(gameDate);
+    if (exists) {
+      console.log(`Game for ${gameDate} already exists`);
+      return;
     }
     await buildGameForDate(gameDate);
     console.log(`Daily game created for ${gameDate}`);
@@ -169,26 +132,20 @@ cron.schedule('0 0 * * *', async () => {
   }
 }, { timezone: TIMEZONE });
 
-// Endpoints
+// endpoints
 app.get('/game/today', async (req, res) => {
   try {
     const gameDate = new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
-    const client = await pool.connect();
-    try {
-      const r = await client.query('SELECT payload FROM games WHERE game_date = $1', [gameDate]);
-      if (r.rows.length) return res.json(r.rows[0].payload);
-      const game = await buildGameForDate(gameDate);
-      return res.json(game);
-    } finally {
-      client.release();
-    }
+    const g = await db.getGameByDate(gameDate);
+    if (g) return res.json(g.payload);
+    const game = await buildGameForDate(gameDate);
+    return res.json(game);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'server error' });
   }
 });
 
-// Admin create for a specific date
 app.post('/game/create', async (req, res) => {
   const { date } = req.body;
   if (!date) return res.status(400).json({ error: 'date required' });
@@ -201,7 +158,6 @@ app.post('/game/create', async (req, res) => {
   }
 });
 
-// Raw UD define endpoint
 app.get('/word/define', async (req, res) => {
   const term = (req.query.term || '').trim();
   if (!term) return res.status(400).json({ error: 'term required' });
