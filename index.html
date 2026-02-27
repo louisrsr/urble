@@ -1,31 +1,31 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>URBLE — Guess the Urban Dictionary definition!</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e1a" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="app">
-
     <header>
       <div class="title">
         <h1>URBLE</h1>
         <p class="tagline">Guess the Urban Dictionary definition</p>
       </div>
-
-      <button id="start-btn">Play</button>
-      <button id="stats-btn">Stats</button>
+      <div class="header-buttons">
+        <button id="start-btn" class="primary-btn">Play</button>
+        <button id="stats-btn" class="secondary-btn">Stats</button>
+      </div>
     </header>
 
     <main>
-
       <div id="progress-bar" class="hidden">
         <div id="progress-fill"></div>
       </div>
 
-      <section id="splash" class="card">
+      <section id="splash" class="card visible">
         <p>Welcome back!</p>
       </section>
 
@@ -37,7 +37,7 @@
       <section id="round" class="card hidden">
         <div class="round-header">
           <h2 id="word-title"></h2>
-          <div id="progress"></div>
+          <div id="progress" class="round-progress"></div>
         </div>
         <div id="options" class="options-grid"></div>
       </section>
@@ -45,15 +45,16 @@
       <section id="result" class="card hidden">
         <h2 id="result-text"></h2>
         <p id="score-text"></p>
-        <button id="share-score">Share</button>
+        <button id="share-score" class="primary-btn">Share</button>
       </section>
 
-      <section id="stats-modal" class="card hidden">
-        <h2>Your Stats</h2>
+      <section id="stats-modal" class="card modal hidden">
+        <div class="modal-header">
+          <h2>Your Stats</h2>
+          <button id="close-stats">Close</button>
+        </div>
         <div id="stats-content"></div>
-        <button id="close-stats">Close</button>
       </section>
-
     </main>
   </div>
 
