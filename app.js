@@ -1,5 +1,4 @@
-document.addEventListener("DOMContentLoaded", function () {
-
+document.addEventListener("DOMContentLoaded", () => {
   /* =========================
      WORD DATABASE
   ========================== */
@@ -13,29 +12,29 @@ document.addEventListener("DOMContentLoaded", function () {
     { word: "Flex", correct: "To show off.", wrong: ["A muscle exercise.", "A phone brand.", "A dance move."] },
     { word: "Cap", correct: "A lie or falsehood.", wrong: ["A hat.", "A beverage.", "A software term."] }
   ];
-
   const TOTAL_ROUNDS = 5;
 
   /* =========================
      DOM ELEMENTS
   ========================== */
-  const startBtn = document.getElementById("start-btn");
-  const splash = document.getElementById("splash");
-  const ad = document.getElementById("ad");
-  const skipAdBtn = document.getElementById("skip-ad");
-  const round = document.getElementById("round");
-  const result = document.getElementById("result");
-  const statsBtn = document.getElementById("stats-btn");
-  const closeStats = document.getElementById("close-stats");
-  const statsModal = document.getElementById("stats-modal");
-  const statsContent = document.getElementById("stats-content");
-
-  const wordTitle = document.getElementById("word-title");
-  const optionsContainer = document.getElementById("options");
-  const progressFill = document.getElementById("progress-fill");
-  const progressBar = document.getElementById("progress-bar");
-  const resultText = document.getElementById("result-text");
-  const scoreText = document.getElementById("score-text");
+  const els = {
+    startBtn: document.getElementById("start-btn"),
+    splash: document.getElementById("splash"),
+    ad: document.getElementById("ad"),
+    skipAdBtn: document.getElementById("skip-ad"),
+    round: document.getElementById("round"),
+    result: document.getElementById("result"),
+    statsBtn: document.getElementById("stats-btn"),
+    closeStats: document.getElementById("close-stats"),
+    statsModal: document.getElementById("stats-modal"),
+    statsContent: document.getElementById("stats-content"),
+    wordTitle: document.getElementById("word-title"),
+    optionsContainer: document.getElementById("options"),
+    progressFill: document.getElementById("progress-fill"),
+    progressBar: document.getElementById("progress-bar"),
+    resultText: document.getElementById("result-text"),
+    scoreText: document.getElementById("score-text"),
+  };
 
   let gameWords = [];
   let currentRound = 0;
@@ -45,152 +44,162 @@ document.addEventListener("DOMContentLoaded", function () {
   /* =========================
      UTILS
   ========================== */
-  function getStats() {
-    return JSON.parse(localStorage.getItem("urbleStats")) || {
-      gamesPlayed: 0,
-      wins: 0,
-      currentStreak: 0,
-      maxStreak: 0,
-      lastPlayed: null
-    };
-  }
+  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
+    gamesPlayed: 0,
+    wins: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastPlayed: null,
+  };
 
-  function saveStats(stats) {
-    localStorage.setItem("urbleStats", JSON.stringify(stats));
-  }
+  const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
 
-  /* Deterministic shuffle based on seed */
-  function shuffleSeed(array, seed) {
-    let result = array.slice();
+  const shuffleSeed = (array, seed) => {
+    const result = array.slice();
+    let s = seed;
     for (let i = result.length - 1; i > 0; i--) {
-      seed = (seed * 9301 + 49297) % 233280;
-      let j = Math.floor((seed / 233280) * (i + 1));
+      s = (s * 9301 + 49297) % 233280;
+      const j = Math.floor((s / 233280) * (i + 1));
       [result[i], result[j]] = [result[j], result[i]];
     }
     return result;
-  }
+  };
 
-  function getDailyWords() {
-    const seed = Number(today.split("-").join(""));
-    return shuffleSeed(WORDS, seed).slice(0, TOTAL_ROUNDS);
-  }
+  const getDailyWords = () => shuffleSeed(WORDS, Number(today.replace(/-/g, ""))).slice(0, TOTAL_ROUNDS);
+
+  const showSection = (section) => {
+    section.classList.remove("hidden");
+    setTimeout(() => section.classList.add("visible"), 20);
+  };
+
+  const hideSection = (section) => {
+    section.classList.remove("visible");
+    setTimeout(() => section.classList.add("hidden"), 300);
+  };
+
+  const showMessage = (msg, duration = 2800) => {
+    const msgEl = document.createElement("p");
+    msgEl.textContent = msg;
+    msgEl.style.color = "var(--muted)";
+    msgEl.style.textAlign = "center";
+    msgEl.style.marginTop = "16px";
+    els.splash.appendChild(msgEl);
+    setTimeout(() => msgEl.remove(), duration);
+  };
 
   /* =========================
      START FLOW
   ========================== */
-  startBtn.addEventListener("click", function () {
-
+  els.startBtn.addEventListener("click", () => {
     const stats = getStats();
     if (stats.lastPlayed === today) {
-      alert("You've already played today!");
+      showMessage("You've already played today's round! Come back tomorrow.");
       return;
     }
-
-    splash.classList.add("hidden");
-    startBtn.classList.add("hidden");
-    ad.classList.remove("hidden");
-
-    skipAdBtn.disabled = true;
-    setTimeout(() => skipAdBtn.disabled = false, 2000);
+    hideSection(els.splash);
+    els.startBtn.classList.add("hidden");
+    showSection(els.ad);
+    els.skipAdBtn.disabled = true;
+    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
   });
 
-  skipAdBtn.addEventListener("click", function () {
-    ad.classList.add("hidden");
-    progressBar.classList.remove("hidden");
+  els.skipAdBtn.addEventListener("click", () => {
+    hideSection(els.ad);
+    showSection(els.progressBar);
     startGame();
   });
 
   /* =========================
      GAME
   ========================== */
-  function startGame() {
+  const startGame = () => {
     currentRound = 0;
     score = 0;
-    result.classList.add("hidden");
-    round.classList.remove("hidden");
-
+    hideSection(els.result);
+    showSection(els.round);
     gameWords = getDailyWords();
     nextRound();
-  }
+  };
 
-  function nextRound() {
+  const nextRound = () => {
     if (currentRound >= TOTAL_ROUNDS) {
       endGame();
       return;
     }
 
     const data = gameWords[currentRound];
-    wordTitle.textContent = data.word;
-    progressFill.style.width = (currentRound / TOTAL_ROUNDS) * 100 + "%";
+    els.wordTitle.textContent = data.word;
+    els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 1);
-    optionsContainer.innerHTML = "";
+    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
+    els.optionsContainer.innerHTML = "";
 
-    answers.forEach(answer => {
+    answers.forEach((answer) => {
       const btn = document.createElement("button");
       btn.textContent = answer;
+      btn.setAttribute("aria-label", `Option: ${answer}`);
       btn.addEventListener("click", () => handleAnswer(btn, answer === data.correct, data.correct));
-      optionsContainer.appendChild(btn);
+      els.optionsContainer.appendChild(btn);
     });
-  }
+  };
 
-  function handleAnswer(clickedBtn, isCorrect, correctAnswer) {
-    const buttons = optionsContainer.querySelectorAll("button");
-
-    buttons.forEach(btn => {
+  const handleAnswer = (clickedBtn, isCorrect, correctAnswer) => {
+    const buttons = els.optionsContainer.querySelectorAll("button");
+    buttons.forEach((btn) => {
       btn.disabled = true;
       if (btn.textContent === correctAnswer) {
-        btn.style.background = "#1DA1F2";
-        btn.style.color = "#fff";
+        btn.classList.add("option-correct");
       }
     });
 
-    if (isCorrect) score++;
-    else {
-      clickedBtn.style.background = "#444";
-      clickedBtn.style.color = "#fff";
+    if (isCorrect) {
+      score++;
+      clickedBtn.classList.add("option-correct");
+    } else {
+      clickedBtn.classList.add("option-wrong");
     }
 
     currentRound++;
-    setTimeout(nextRound, 1200);
-  }
+    setTimeout(nextRound, 1400);
+  };
 
-  function endGame() {
-    round.classList.add("hidden");
-    result.classList.remove("hidden");
-    progressFill.style.width = "100%";
-    resultText.textContent = "Game Complete";
-    scoreText.textContent = `You scored ${score} / ${TOTAL_ROUNDS}`;
+  const endGame = () => {
+    hideSection(els.round);
+    showSection(els.result);
+    els.progressFill.style.width = "100%";
+    els.resultText.textContent = "Game Complete!";
+    els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
     updateStats();
-  }
+  };
 
-  function updateStats() {
+  const updateStats = () => {
     const stats = getStats();
     stats.gamesPlayed++;
     if (score >= 3) stats.wins++;
-
-    if (stats.lastPlayed === new Date(Date.now() - 86400000).toDateString()) {
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    if (stats.lastPlayed === yesterday) {
       stats.currentStreak++;
     } else if (stats.lastPlayed !== today) {
       stats.currentStreak = 1;
     }
-
     stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
     stats.lastPlayed = today;
     saveStats(stats);
-  }
+  };
 
-  statsBtn.addEventListener("click", function () {
+  /* =========================
+     STATS MODAL
+  ========================== */
+  els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
-    statsContent.innerHTML = `
-      Games Played: ${stats.gamesPlayed}<br>
-      Wins: ${stats.wins}<br>
-      Current Streak: ${stats.currentStreak}<br>
-      Max Streak: ${stats.maxStreak}
+    els.statsContent.innerHTML = `
+      <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
+      <p><strong>Wins:</strong> ${stats.wins}</p>
+      <p><strong>Current Streak:</strong> ${stats.currentStreak}</p>
+      <p><strong>Max Streak:</strong> ${stats.maxStreak}</p>
     `;
-    statsModal.classList.remove("hidden");
+    showSection(els.statsModal);
   });
 
-  closeStats.addEventListener("click", () => statsModal.classList.add("hidden"));
-
+  els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 });
