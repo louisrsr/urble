@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  /* =========================
+     DOM ELEMENTS
+  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -16,10 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     progressBar: document.getElementById("progress-bar"),
     resultText: document.getElementById("result-text"),
     scoreText: document.getElementById("score-text"),
-    document.getElementById("contact-btn").addEventListener("click", () => {
-  window.open("/contact", "_blank"); // opens in new tab
-  // or window.location.href = "/contact"; // same tab
-    )};
   };
 
   let gameWords = [];
@@ -28,6 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
+  /* =========================
+     UTILS
+  ========================== */
   const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
     gamesPlayed: 0,
     wins: 0,
@@ -49,32 +51,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
+  // Clean [bracketed] text from Urban Dictionary entries
+  const cleanText = (text) => {
+    if (!text) return "";
+    return text.replace(/\[([^\]]+)\]/g, "$1").trim();
+  };
+
+  // Load daily words from Worker
   async function loadDailyWords() {
-    showMessage("Loading today's words from server...", 8000);
+    showMessage("Loading today's words...", 6000);
 
     try {
-      const res = await fetch("https://urble.louisrsr.workers.dev/daily", {
-        headers: {
-          "Accept": "application/json"
-        }
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
-      }
-
+      const res = await fetch("https://urble.louisrsr.workers.dev/daily");
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       gameWords = await res.json();
 
       if (gameWords.length !== TOTAL_ROUNDS) {
         throw new Error("Incomplete data");
       }
 
-      console.log("Loaded daily words:", gameWords);
-      showMessage("Words loaded! Ready to play.", 3000);
+      console.log("Daily words loaded:", gameWords);
+      showMessage("Ready!", 2000);
       return true;
     } catch (err) {
-      console.error("Load error:", err);
-      showMessage("Couldn't load today's words. Using demo mode.", 10000);
+      console.error("Load failed:", err);
+      showMessage("Couldn't load daily words. Using demo mode.", 8000);
       gameWords = [
         { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
         { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
@@ -96,10 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  const showMessage = (msg, duration = 5000) => {
-    const existing = els.splash.querySelector("p:last-child");
-    if (existing) existing.remove();
-
+  const showMessage = (msg, duration = 4000) => {
     const msgEl = document.createElement("p");
     msgEl.textContent = msg;
     msgEl.style.color = "var(--muted)";
@@ -109,6 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => msgEl.remove(), duration);
   };
 
+  /* =========================
+     START FLOW
+  ========================== */
   els.startBtn.addEventListener("click", async () => {
     const stats = getStats();
     if (stats.lastPlayed === today) {
@@ -116,16 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const loaded = await loadDailyWords();
-    if (!loaded) {
-      showMessage("Using demo mode – real daily soon.");
-    }
+    await loadDailyWords();
 
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     showSection(els.ad);
     els.skipAdBtn.disabled = true;
-    setTimeout(() => els.skipAdBtn.disabled = false, 2500);
+    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
   });
 
   els.skipAdBtn.addEventListener("click", () => {
@@ -134,16 +132,15 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   });
 
+  /* =========================
+     GAME
+  ========================== */
   const startGame = () => {
+    document.body.classList.add("game-started"); // trigger title minimize
     currentRound = 0;
     score = 0;
     hideSection(els.result);
     showSection(els.round);
-    if (gameWords.length === 0) {
-      els.wordTitle.textContent = "No words loaded";
-      els.optionsContainer.innerHTML = "<p>Error – refresh page</p>";
-      return;
-    }
     nextRound();
   };
 
@@ -154,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const data = gameWords[currentRound];
-    els.wordTitle.textContent = data.word || "Word missing";
+    els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
     const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
@@ -162,8 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     answers.forEach((answer) => {
       const btn = document.createElement("button");
-      btn.textContent = answer;
-      btn.setAttribute("aria-label", `Option: ${answer}`);
+      btn.textContent = cleanText(answer);
+      btn.setAttribute("aria-label", `Option: ${cleanText(answer)}`);
       btn.addEventListener("click", () => handleAnswer(btn, answer === data.correct, data.correct));
       els.optionsContainer.appendChild(btn);
     });
@@ -173,7 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const buttons = els.optionsContainer.querySelectorAll("button");
     buttons.forEach((btn) => {
       btn.disabled = true;
-      if (btn.textContent === correctAnswer) btn.classList.add("option-correct");
+      if (btn.textContent === cleanText(correctAnswer)) {
+        btn.classList.add("option-correct");
+      }
     });
 
     if (isCorrect) {
@@ -211,6 +210,9 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
+  /* =========================
+     STATS MODAL & CONTACT
+  ========================== */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     els.statsContent.innerHTML = `
@@ -223,4 +225,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
+
+  // Contact button (add <button id="contact-btn">Contact</button> in HTML footer)
+  document.getElementById("contact-btn")?.addEventListener("click", () => {
+    window.open("/contact.html", "_blank");
+  });
 });
