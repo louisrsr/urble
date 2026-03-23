@@ -1,20 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
-     WORD DATABASE
-  ========================== */
-  const WORDS = [
-    { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["A gaming strategy.", "An energy drink.", "A fashion brand."] },
-    { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "A yoga pose.", "A hairstyle."] },
-    { word: "Touch grass", correct: "An insult telling someone to go outside.", wrong: ["A gardening method.", "A dance move.", "A hiking technique."] },
-    { word: "NPC", correct: "Someone acting robotic or unoriginal.", wrong: ["A political party.", "A coding language.", "A music genre."] },
-    { word: "Delulu", correct: "Playfully delusional.", wrong: ["A cartoon character.", "A dessert.", "A sneaker brand."] },
-    { word: "Sus", correct: "Suspicious or questionable.", wrong: ["A sushi dish.", "A superhero.", "A workout style."] },
-    { word: "Flex", correct: "To show off.", wrong: ["A muscle exercise.", "A phone brand.", "A dance move."] },
-    { word: "Cap", correct: "A lie or falsehood.", wrong: ["A hat.", "A beverage.", "A software term."] }
-  ];
-  const TOTAL_ROUNDS = 5;
-
-  /* =========================
      DOM ELEMENTS
   ========================== */
   const els = {
@@ -40,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentRound = 0;
   let score = 0;
   const today = new Date().toDateString();
+  const TOTAL_ROUNDS = 5;
 
   /* =========================
      UTILS
@@ -65,7 +51,27 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  const getDailyWords = () => shuffleSeed(WORDS, Number(today.replace(/-/g, ""))).slice(0, TOTAL_ROUNDS);
+  // NEW: Load daily words from your Worker
+  async function loadDailyWords() {
+    try {
+      const res = await fetch("https://urble.louisrsr.workers.dev/daily");
+      if (!res.ok) throw new Error(`Daily fetch failed: ${res.status}`);
+      gameWords = await res.json();
+
+      // Ensure we have exactly TOTAL_ROUNDS (or fallback)
+      if (gameWords.length !== TOTAL_ROUNDS) {
+        throw new Error("Incomplete daily data");
+      }
+    } catch (err) {
+      console.error("Failed to load daily words:", err);
+      showMessage("Today's words aren't ready yet. Try again soon or play a practice round.");
+      // Optional: keep old hardcoded WORDS as very last resort fallback
+      gameWords = [
+        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["A gaming strategy.", "An energy drink.", "A fashion brand."] },
+        // ... add 4 more if you want
+      ].slice(0, TOTAL_ROUNDS);
+    }
+  }
 
   const showSection = (section) => {
     section.classList.remove("hidden");
@@ -90,12 +96,16 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================
      START FLOW
   ========================== */
-  els.startBtn.addEventListener("click", () => {
+  els.startBtn.addEventListener("click", async () => {
     const stats = getStats();
     if (stats.lastPlayed === today) {
       showMessage("You've already played today's round! Come back tomorrow.");
       return;
     }
+
+    // Load daily words before showing ad
+    await loadDailyWords();
+
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     showSection(els.ad);
@@ -117,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     score = 0;
     hideSection(els.result);
     showSection(els.round);
-    gameWords = getDailyWords();
+    // gameWords already loaded from loadDailyWords()
     nextRound();
   };
 
@@ -131,9 +141,10 @@ document.addEventListener("DOMContentLoaded", () => {
     els.wordTitle.textContent = data.word;
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
+    // Shuffle correct + all wrong options
     const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
-    els.optionsContainer.innerHTML = "";
 
+    els.optionsContainer.innerHTML = "";
     answers.forEach((answer) => {
       const btn = document.createElement("button");
       btn.textContent = answer;
