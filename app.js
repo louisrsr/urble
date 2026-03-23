@@ -16,6 +16,10 @@ document.addEventListener("DOMContentLoaded", () => {
     progressBar: document.getElementById("progress-bar"),
     resultText: document.getElementById("result-text"),
     scoreText: document.getElementById("score-text"),
+    document.getElementById("contact-btn").addEventListener("click", () => {
+  window.open("/contact", "_blank"); // opens in new tab
+  // or window.location.href = "/contact"; // same tab
+});
   };
 
   let gameWords = [];
