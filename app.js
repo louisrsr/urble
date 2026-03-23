@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("contact-btn").addEventListener("click", () => {
   window.open("/contact", "_blank"); // opens in new tab
   // or window.location.href = "/contact"; // same tab
-});
   };
 
   let gameWords = [];
