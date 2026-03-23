@@ -1,10 +1,10 @@
 :root {
   --bg: #1d2339;
-  --card-bg: rgba(29, 35, 57, 0.65);       /* semi-transparent over bg */
-  --card-border: rgba(228, 245, 62, 0.25); /* lime outline influence */
+  --card-bg: rgba(29, 35, 57, 0.65);
+  --card-border: rgba(228, 245, 62, 0.25);
   --text: #ffffff;
   --muted: #d0d4e0;
-  --primary: #e4f53e;                      /* lime for play button & accents */
+  --primary: #e4f53e;
   --radius-lg: 28px;
   --radius-md: 20px;
   --transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -17,17 +17,15 @@ body {
   min-height: 100dvh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Source Sans Pro', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'Source Sans Pro', system-ui, sans-serif;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
 }
 
 #app {
   width: 100%;
   max-width: 440px;
-  padding: 24px 16px 48px; /* reduced padding for better mobile fit */
+  padding: 20px 16px 60px;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -45,32 +43,31 @@ header {
 .title h1 {
   margin: 0 0 8px;
   font-family: 'Lora', serif;
-  font-size: 3.2rem; /* slightly smaller than original 3.4rem */
+  font-size: 3rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text);
 }
 
 .game-started .title {
-  transform: scale(0.82) translateY(-8px); /* minimize effect once game starts */
+  transform: scale(0.8) translateY(-8px);
 }
 
 .game-started .title h1 {
-  font-size: 2.4rem; /* even smaller in game */
+  font-size: 2.4rem;
 }
 
 .tagline {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: var(--muted);
-  font-weight: 400;
 }
 
 .header-buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 button {
@@ -89,14 +86,8 @@ button:active { transform: scale(0.96); }
 
 .primary-btn {
   background: var(--primary);
-  color: #000; /* black text on lime */
+  color: #000;
   font-weight: 700;
-}
-
-.secondary-btn {
-  background: var(--card-bg);
-  color: var(--text);
-  border: 1px solid var(--card-border);
 }
 
 .card,
@@ -146,7 +137,6 @@ button:active { transform: scale(0.96); }
   font-family: 'Lora', serif;
   font-size: 2.2rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 .options-grid {
@@ -192,10 +182,8 @@ button:active { transform: scale(0.96); }
 
 .modal-header h2 { margin: 0; font-family: 'Lora', serif; }
 
-/* Mobile optimizations */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
-  .title h1 { font-size: 2.8rem; }
+  .title h1 { font-size: 2.6rem; }
   .game-started .title h1 { font-size: 2.1rem; }
-  .options-grid button { min-height: 80px; padding: 14px; }
 }
