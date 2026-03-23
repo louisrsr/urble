@@ -51,29 +51,19 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  // Clean [bracketed] text from Urban Dictionary entries
   const cleanText = (text) => {
     if (!text) return "";
     return text.replace(/\[([^\]]+)\]/g, "$1").trim();
   };
 
-  // Load daily words from Worker
   async function loadDailyWords() {
     try {
-      showMessage("Loading today's words...", 6000);
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       gameWords = await res.json();
-
-      if (gameWords.length !== TOTAL_ROUNDS) {
-        throw new Error("Incomplete data");
-      }
-
-      console.log("Daily words loaded:", gameWords);
-      return true;
+      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
     } catch (err) {
       console.error("Load failed:", err);
-      showMessage("Couldn't load daily words. Using demo mode.", 8000);
       gameWords = [
         { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
         { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
@@ -81,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
         { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
         { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
       ];
-      return false;
     }
   }
 
@@ -134,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
      GAME
   ========================== */
   const startGame = () => {
-    document.body.classList.add("game-started"); // shrink title
+    document.body.classList.add("game-started");
     currentRound = 0;
     score = 0;
     hideSection(els.result);
@@ -224,7 +213,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  // Contact button listener (assumes <button id="contact-btn"> in HTML)
   document.getElementById("contact-btn")?.addEventListener("click", () => {
     window.open("/contact.html", "_blank");
   });
