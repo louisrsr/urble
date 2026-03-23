@@ -19,11 +19,15 @@ document.addEventListener("DOMContentLoaded", () => {
     progressBar: document.getElementById("progress-bar"),
     resultText: document.getElementById("result-text"),
     scoreText: document.getElementById("score-text"),
+    showAnswersBtn: document.getElementById("show-answers"), // new
+    playAgainBtn: document.getElementById("play-again"),     // new
   };
 
   let gameWords = [];
   let currentRound = 0;
   let score = 0;
+  let playerAnswers = []; // track what user picked per round
+  const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
   /* =========================
@@ -50,24 +54,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  // Clean [bracketed] text from Urban Dictionary entries
   const cleanText = (text) => {
     if (!text) return "";
-    return text.replace(/\[([^\]]+)\]/g, "$1").trim();
+    return text
+      .replace(/\[([^\]]+)\]/g, "$1")      // remove [brackets]
+      .replace(/\([nv]\.\)/gi, "")         // remove (n.) (v.)
+      .replace(/\s+/g, " ")                // normalize spaces
+      .trim();
   };
 
-  // Load daily words from Worker
   async function loadDailyWords() {
     try {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       gameWords = await res.json();
-
-      if (gameWords.length !== TOTAL_ROUNDS) {
-        throw new Error("Incomplete data");
-      }
-
-      console.log("Daily words loaded:", gameWords);
+      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
     } catch (err) {
       console.error("Load failed:", err);
       showMessage("Couldn't load daily words. Using demo mode.", 8000);
@@ -105,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
      START FLOW
   ========================== */
   els.startBtn.addEventListener("click", async () => {
-    // Removed daily limit check for testing/unlimited plays
+    // No daily limit check — unlimited plays
     await loadDailyWords();
 
     hideSection(els.splash);
@@ -125,9 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
      GAME
   ========================== */
   const startGame = () => {
-    document.body.classList.add("game-started"); // shrink title
+    document.body.classList.add("game-started");
     currentRound = 0;
     score = 0;
+    playerAnswers = []; // reset answers tracking
     hideSection(els.result);
     showSection(els.round);
     nextRound();
@@ -150,25 +152,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const btn = document.createElement("button");
       btn.textContent = cleanText(answer);
       btn.setAttribute("aria-label", `Option: ${cleanText(answer)}`);
-      btn.addEventListener("click", () => handleAnswer(btn, answer === data.correct, data.correct));
+      btn.addEventListener("click", () => handleAnswer(btn, answer, data.correct));
       els.optionsContainer.appendChild(btn);
     });
   };
 
-  const handleAnswer = (clickedBtn, isCorrect, correctAnswer) => {
+  const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
+    playerAnswers[currentRound] = selectedAnswer; // track what user picked
+
     const buttons = els.optionsContainer.querySelectorAll("button");
     buttons.forEach((btn) => {
       btn.disabled = true;
       if (btn.textContent === cleanText(correctAnswer)) {
         btn.classList.add("option-correct");
       }
+      if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) {
+        btn.classList.add("option-wrong");
+      }
     });
 
-    if (isCorrect) {
+    if (selectedAnswer === correctAnswer) {
       score++;
-      clickedBtn.classList.add("option-correct");
-    } else {
-      clickedBtn.classList.add("option-wrong");
     }
 
     currentRound++;
@@ -181,15 +185,38 @@ document.addEventListener("DOMContentLoaded", () => {
     els.progressFill.style.width = "100%";
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
+
+    // Show Answers button
+    els.showAnswersBtn.style.display = "block";
+
     updateStats();
   };
+
+  // Show Answers functionality
+  els.showAnswersBtn?.addEventListener("click", () => {
+    let html = "<h3>Your Answers</h3>";
+    gameWords.forEach((data, i) => {
+      const userAnswer = playerAnswers[i] || "No answer";
+      const correct = cleanText(data.correct);
+      const user = cleanText(userAnswer);
+      const isCorrect = userAnswer === data.correct;
+      html += `
+        <div style="margin:12px 0; padding:12px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px;">
+          <strong>Word:</strong> ${cleanText(data.word)}<br>
+          <strong>Your choice:</strong> ${user} ${isCorrect ? "✅" : "❌"}<br>
+          <strong>Correct:</strong> ${correct}
+        </div>
+      `;
+    });
+    els.statsContent.innerHTML = html;
+    showSection(els.statsModal);
+  });
 
   const updateStats = () => {
     const stats = getStats();
     stats.gamesPlayed++;
     if (score >= 3) stats.wins++;
-    // Removed daily streak logic for testing (unlimited plays)
-    stats.lastPlayed = today; // still update for stats tracking
+    stats.lastPlayed = today;
     saveStats(stats);
   };
 
@@ -211,5 +238,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("contact-btn")?.addEventListener("click", () => {
     window.open("/contact.html", "_blank");
+  });
+
+  // Play Again button on result page
+  els.playAgainBtn?.addEventListener("click", () => {
+    hideSection(els.result);
+    startGame();
   });
 });
