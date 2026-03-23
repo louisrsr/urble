@@ -24,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let gameWords = [];
   let currentRound = 0;
   let score = 0;
-  const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
   /* =========================
@@ -51,19 +50,27 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
+  // Clean [bracketed] text from Urban Dictionary entries
   const cleanText = (text) => {
     if (!text) return "";
     return text.replace(/\[([^\]]+)\]/g, "$1").trim();
   };
 
+  // Load daily words from Worker
   async function loadDailyWords() {
     try {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       gameWords = await res.json();
-      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
+
+      if (gameWords.length !== TOTAL_ROUNDS) {
+        throw new Error("Incomplete data");
+      }
+
+      console.log("Daily words loaded:", gameWords);
     } catch (err) {
       console.error("Load failed:", err);
+      showMessage("Couldn't load daily words. Using demo mode.", 8000);
       gameWords = [
         { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
         { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
@@ -98,12 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
      START FLOW
   ========================== */
   els.startBtn.addEventListener("click", async () => {
-    const stats = getStats();
-    if (stats.lastPlayed === today) {
-      showMessage("Already played today! Come back tomorrow.");
-      return;
-    }
-
+    // Removed daily limit check for testing/unlimited plays
     await loadDailyWords();
 
     hideSection(els.splash);
@@ -123,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
      GAME
   ========================== */
   const startGame = () => {
-    document.body.classList.add("game-started");
+    document.body.classList.add("game-started"); // shrink title
     currentRound = 0;
     score = 0;
     hideSection(els.result);
@@ -186,14 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const stats = getStats();
     stats.gamesPlayed++;
     if (score >= 3) stats.wins++;
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    if (stats.lastPlayed === yesterday) {
-      stats.currentStreak++;
-    } else if (stats.lastPlayed !== today) {
-      stats.currentStreak = 1;
-    }
-    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-    stats.lastPlayed = today;
+    // Removed daily streak logic for testing (unlimited plays)
+    stats.lastPlayed = today; // still update for stats tracking
     saveStats(stats);
   };
 
@@ -205,8 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
     els.statsContent.innerHTML = `
       <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
       <p><strong>Wins:</strong> ${stats.wins}</p>
-      <p><strong>Current Streak:</strong> ${stats.currentStreak}</p>
-      <p><strong>Max Streak:</strong> ${stats.maxStreak}</p>
+      <p><strong>Current Streak:</strong> ${stats.currentStreak || 0}</p>
+      <p><strong>Max Streak:</strong> ${stats.maxStreak || 0}</p>
     `;
     showSection(els.statsModal);
   });
