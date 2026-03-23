@@ -1,7 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-     DOM ELEMENTS
-  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -27,9 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  /* =========================
-     UTILS
-  ========================== */
   const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
     gamesPlayed: 0,
     wins: 0,
@@ -51,45 +45,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  // NEW: Load daily words from Worker with loading + retry
   async function loadDailyWords() {
-    showMessage("Loading today's words...", 5000); // temporary loading msg
+    showMessage("Loading today's words from server...", 8000);
 
     try {
-      const res = await fetch("https://urble.louisrsr.workers.dev/daily");
+      const res = await fetch("https://urble.louisrsr.workers.dev/daily", {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
       if (!res.ok) {
-        throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        throw new Error(`Server error: ${res.status}`);
       }
+
       gameWords = await res.json();
 
       if (gameWords.length !== TOTAL_ROUNDS) {
-        throw new Error("Incomplete data from server");
+        throw new Error("Incomplete data");
       }
 
-      console.log("Daily words loaded successfully:", gameWords);
+      console.log("Loaded daily words:", gameWords);
+      showMessage("Words loaded! Ready to play.", 3000);
       return true;
     } catch (err) {
-      console.error("Load daily words error:", err);
-      showMessage("Couldn't load today's words. Retrying in a moment...", 5000);
-      // Retry once after 3 seconds
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      try {
-        const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-        if (!res.ok) throw new Error("Retry failed");
-        gameWords = await res.json();
-        if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Retry incomplete");
-        console.log("Retry success:", gameWords);
-        return true;
-      } catch (retryErr) {
-        console.error("Retry failed:", retryErr);
-        showMessage("Still no words – play a practice round or check back later.", 10000);
-        // Very basic fallback (add more if needed)
-        gameWords = [
-          { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strat.", "Energy drink.", "Fashion brand."] },
-          // ... add 4 more quick fallbacks
-        ].slice(0, TOTAL_ROUNDS);
-        return false;
-      }
+      console.error("Load error:", err);
+      showMessage("Couldn't load today's words. Using demo mode.", 10000);
+      gameWords = [
+        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
+        { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
+        { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] },
+        { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
+        { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
+      ];
+      return false;
     }
   }
 
@@ -104,6 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const showMessage = (msg, duration = 5000) => {
+    const existing = els.splash.querySelector("p:last-child");
+    if (existing) existing.remove();
+
     const msgEl = document.createElement("p");
     msgEl.textContent = msg;
     msgEl.style.color = "var(--muted)";
@@ -113,28 +105,23 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => msgEl.remove(), duration);
   };
 
-  /* =========================
-     START FLOW
-  ========================== */
   els.startBtn.addEventListener("click", async () => {
     const stats = getStats();
     if (stats.lastPlayed === today) {
-      showMessage("You've already played today! Come back tomorrow.");
+      showMessage("Already played today! Come back tomorrow.");
       return;
     }
 
-    // Load words before proceeding
     const loaded = await loadDailyWords();
     if (!loaded) {
-      // Still allow play with fallback
-      showMessage("Using practice mode – real daily words coming soon.");
+      showMessage("Using demo mode – real daily soon.");
     }
 
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     showSection(els.ad);
     els.skipAdBtn.disabled = true;
-    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
+    setTimeout(() => els.skipAdBtn.disabled = false, 2500);
   });
 
   els.skipAdBtn.addEventListener("click", () => {
@@ -143,16 +130,15 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   });
 
-  /* =========================
-     GAME
-  ========================== */
   const startGame = () => {
     currentRound = 0;
     score = 0;
     hideSection(els.result);
     showSection(els.round);
     if (gameWords.length === 0) {
-      showMessage("No words loaded – game in demo mode.");
+      els.wordTitle.textContent = "No words loaded";
+      els.optionsContainer.innerHTML = "<p>Error – refresh page</p>";
+      return;
     }
     nextRound();
   };
@@ -164,13 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const data = gameWords[currentRound];
-    if (!data || !data.word) {
-      els.wordTitle.textContent = "Word not loaded";
-      els.optionsContainer.innerHTML = "<p>Error loading round. Try refreshing.</p>";
-      return;
-    }
-
-    els.wordTitle.textContent = data.word;
+    els.wordTitle.textContent = data.word || "Word missing";
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
     const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
@@ -189,9 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const buttons = els.optionsContainer.querySelectorAll("button");
     buttons.forEach((btn) => {
       btn.disabled = true;
-      if (btn.textContent === correctAnswer) {
-        btn.classList.add("option-correct");
-      }
+      if (btn.textContent === correctAnswer) btn.classList.add("option-correct");
     });
 
     if (isCorrect) {
@@ -229,9 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* =========================
-     STATS MODAL
-  ========================== */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     els.statsContent.innerHTML = `
