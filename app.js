@@ -19,14 +19,14 @@ document.addEventListener("DOMContentLoaded", () => {
     progressBar: document.getElementById("progress-bar"),
     resultText: document.getElementById("result-text"),
     scoreText: document.getElementById("score-text"),
-    showAnswersBtn: document.getElementById("show-answers"), // new
-    playAgainBtn: document.getElementById("play-again"),     // new
+    showAnswersBtn: document.getElementById("show-answers"),
+    playAgainBtn: document.getElementById("play-again"),
   };
 
   let gameWords = [];
   let currentRound = 0;
   let score = 0;
-  let playerAnswers = []; // track what user picked per round
+  let playerAnswers = []; // track user's choice per round
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
@@ -54,12 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
+  // Clean text: remove [brackets], (n.), (v.), etc.
   const cleanText = (text) => {
     if (!text) return "";
     return text
-      .replace(/\[([^\]]+)\]/g, "$1")      // remove [brackets]
-      .replace(/\([nv]\.\)/gi, "")         // remove (n.) (v.)
-      .replace(/\s+/g, " ")                // normalize spaces
+      .replace(/\[([^\]]+)\]/g, "$1")
+      .replace(/\([nv]\.\)/gi, "")
+      .replace(/\s+/g, " ")
       .trim();
   };
 
@@ -106,11 +107,11 @@ document.addEventListener("DOMContentLoaded", () => {
      START FLOW
   ========================== */
   els.startBtn.addEventListener("click", async () => {
-    // No daily limit check — unlimited plays
     await loadDailyWords();
 
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
+    els.statsBtn.style.display = "none"; // hide stats during game
     showSection(els.ad);
     els.skipAdBtn.disabled = true;
     setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
@@ -129,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("game-started");
     currentRound = 0;
     score = 0;
-    playerAnswers = []; // reset answers tracking
+    playerAnswers = [];
     hideSection(els.result);
     showSection(els.round);
     nextRound();
@@ -145,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
+    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100); // better randomization
     els.optionsContainer.innerHTML = "";
 
     answers.forEach((answer) => {
@@ -158,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
-    playerAnswers[currentRound] = selectedAnswer; // track what user picked
+    playerAnswers[currentRound] = selectedAnswer;
 
     const buttons = els.optionsContainer.querySelectorAll("button");
     buttons.forEach((btn) => {
@@ -185,32 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
     els.progressFill.style.width = "100%";
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
-
-    // Show Answers button
-    els.showAnswersBtn.style.display = "block";
-
+    els.statsBtn.style.display = "block"; // show stats again on result
     updateStats();
   };
-
-  // Show Answers functionality
-  els.showAnswersBtn?.addEventListener("click", () => {
-    let html = "<h3>Your Answers</h3>";
-    gameWords.forEach((data, i) => {
-      const userAnswer = playerAnswers[i] || "No answer";
-      const correct = cleanText(data.correct);
-      const user = cleanText(userAnswer);
-      const isCorrect = userAnswer === data.correct;
-      html += `
-        <div style="margin:12px 0; padding:12px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px;">
-          <strong>Word:</strong> ${cleanText(data.word)}<br>
-          <strong>Your choice:</strong> ${user} ${isCorrect ? "✅" : "❌"}<br>
-          <strong>Correct:</strong> ${correct}
-        </div>
-      `;
-    });
-    els.statsContent.innerHTML = html;
-    showSection(els.statsModal);
-  });
 
   const updateStats = () => {
     const stats = getStats();
@@ -244,5 +222,25 @@ document.addEventListener("DOMContentLoaded", () => {
   els.playAgainBtn?.addEventListener("click", () => {
     hideSection(els.result);
     startGame();
+  });
+
+  // Show Answers button
+  els.showAnswersBtn?.addEventListener("click", () => {
+    let html = "<h3>Your Answers</h3>";
+    gameWords.forEach((data, i) => {
+      const userAnswer = playerAnswers[i] || "No answer";
+      const correct = cleanText(data.correct);
+      const user = cleanText(userAnswer);
+      const isCorrect = userAnswer === data.correct;
+      html += `
+        <div style="margin:12px 0; padding:12px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px;">
+          <strong>Word:</strong> ${cleanText(data.word)}<br>
+          <strong>Your choice:</strong> ${user} ${isCorrect ? "✅" : "❌"}<br>
+          <strong>Correct:</strong> ${correct}
+        </div>
+      `;
+    });
+    els.statsContent.innerHTML = html;
+    showSection(els.statsModal);
   });
 });
