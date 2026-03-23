@@ -51,25 +51,45 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  // NEW: Load daily words from your Worker
+  // NEW: Load daily words from Worker with loading + retry
   async function loadDailyWords() {
+    showMessage("Loading today's words...", 5000); // temporary loading msg
+
     try {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Daily fetch failed: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+      }
       gameWords = await res.json();
 
-      // Ensure we have exactly TOTAL_ROUNDS (or fallback)
       if (gameWords.length !== TOTAL_ROUNDS) {
-        throw new Error("Incomplete daily data");
+        throw new Error("Incomplete data from server");
       }
+
+      console.log("Daily words loaded successfully:", gameWords);
+      return true;
     } catch (err) {
-      console.error("Failed to load daily words:", err);
-      showMessage("Today's words aren't ready yet. Try again soon or play a practice round.");
-      // Optional: keep old hardcoded WORDS as very last resort fallback
-      gameWords = [
-        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["A gaming strategy.", "An energy drink.", "A fashion brand."] },
-        // ... add 4 more if you want
-      ].slice(0, TOTAL_ROUNDS);
+      console.error("Load daily words error:", err);
+      showMessage("Couldn't load today's words. Retrying in a moment...", 5000);
+      // Retry once after 3 seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      try {
+        const res = await fetch("https://urble.louisrsr.workers.dev/daily");
+        if (!res.ok) throw new Error("Retry failed");
+        gameWords = await res.json();
+        if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Retry incomplete");
+        console.log("Retry success:", gameWords);
+        return true;
+      } catch (retryErr) {
+        console.error("Retry failed:", retryErr);
+        showMessage("Still no words – play a practice round or check back later.", 10000);
+        // Very basic fallback (add more if needed)
+        gameWords = [
+          { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strat.", "Energy drink.", "Fashion brand."] },
+          // ... add 4 more quick fallbacks
+        ].slice(0, TOTAL_ROUNDS);
+        return false;
+      }
     }
   }
 
@@ -83,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  const showMessage = (msg, duration = 2800) => {
+  const showMessage = (msg, duration = 5000) => {
     const msgEl = document.createElement("p");
     msgEl.textContent = msg;
     msgEl.style.color = "var(--muted)";
@@ -99,12 +119,16 @@ document.addEventListener("DOMContentLoaded", () => {
   els.startBtn.addEventListener("click", async () => {
     const stats = getStats();
     if (stats.lastPlayed === today) {
-      showMessage("You've already played today's round! Come back tomorrow.");
+      showMessage("You've already played today! Come back tomorrow.");
       return;
     }
 
-    // Load daily words before showing ad
-    await loadDailyWords();
+    // Load words before proceeding
+    const loaded = await loadDailyWords();
+    if (!loaded) {
+      // Still allow play with fallback
+      showMessage("Using practice mode – real daily words coming soon.");
+    }
 
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
@@ -127,7 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
     score = 0;
     hideSection(els.result);
     showSection(els.round);
-    // gameWords already loaded from loadDailyWords()
+    if (gameWords.length === 0) {
+      showMessage("No words loaded – game in demo mode.");
+    }
     nextRound();
   };
 
@@ -138,13 +164,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const data = gameWords[currentRound];
+    if (!data || !data.word) {
+      els.wordTitle.textContent = "Word not loaded";
+      els.optionsContainer.innerHTML = "<p>Error loading round. Try refreshing.</p>";
+      return;
+    }
+
     els.wordTitle.textContent = data.word;
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    // Shuffle correct + all wrong options
     const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + 42);
-
     els.optionsContainer.innerHTML = "";
+
     answers.forEach((answer) => {
       const btn = document.createElement("button");
       btn.textContent = answer;
