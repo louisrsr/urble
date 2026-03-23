@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     scoreText: document.getElementById("score-text"),
     showAnswersBtn: document.getElementById("show-answers"),
     playAgainBtn: document.getElementById("play-again"),
+    shareBtn: document.getElementById("share-btn"), // new
   };
 
   let gameWords = [];
@@ -29,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let playerAnswers = []; // track user's choice per round
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
+  const GAME_URL = "https://www.urble.co.uk"; // change to your domain
 
   /* =========================
      UTILS
@@ -54,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  // Clean text: remove [brackets], (n.), (v.), etc.
   const cleanText = (text) => {
     if (!text) return "";
     return text
@@ -146,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100); // better randomization
+    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100);
     els.optionsContainer.innerHTML = "";
 
     answers.forEach((answer) => {
@@ -186,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
     els.progressFill.style.width = "100%";
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
-    els.statsBtn.style.display = "block"; // show stats again on result
+    els.statsBtn.style.display = "block"; // show stats on result
     updateStats();
   };
 
@@ -218,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.open("/contact.html", "_blank");
   });
 
-  // Play Again button on result page
+  // Play Again button
   els.playAgainBtn?.addEventListener("click", () => {
     hideSection(els.result);
     startGame();
@@ -242,5 +243,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     els.statsContent.innerHTML = html;
     showSection(els.statsModal);
+  });
+
+  // NEW: Share button (Wordle-style grid)
+  document.getElementById("share-btn")?.addEventListener("click", () => {
+    let grid = "URBLE " + score + "/" + TOTAL_ROUNDS + "\n";
+    gameWords.forEach((data, i) => {
+      const userAnswer = playerAnswers[i] || "";
+      const isCorrect = userAnswer === data.correct;
+      grid += isCorrect ? "🟩" : "🟥";
+    });
+    grid += "\n\nPlay at " + GAME_URL + " #URBLE";
+
+    navigator.clipboard.writeText(grid).then(() => {
+      alert("Copied to clipboard! Paste to share (no spoilers).");
+    }).catch(() => {
+      prompt("Copy this to share:\n\n" + grid);
+    });
   });
 });
