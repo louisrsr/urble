@@ -59,9 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load daily words from Worker
   async function loadDailyWords() {
-    showMessage("Loading today's words...", 6000);
-
     try {
+      showMessage("Loading today's words...", 6000);
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       gameWords = await res.json();
@@ -71,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       console.log("Daily words loaded:", gameWords);
-      showMessage("Ready!", 2000);
       return true;
     } catch (err) {
       console.error("Load failed:", err);
@@ -97,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  const showMessage = (msg, duration = 4000) => {
+  const showMessage = (msg, duration = 5000) => {
     const msgEl = document.createElement("p");
     msgEl.textContent = msg;
     msgEl.style.color = "var(--muted)";
@@ -136,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
      GAME
   ========================== */
   const startGame = () => {
-    document.body.classList.add("game-started"); // trigger title minimize
+    document.body.classList.add("game-started"); // shrink title
     currentRound = 0;
     score = 0;
     hideSection(els.result);
@@ -226,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  // Contact button (add <button id="contact-btn">Contact</button> in HTML footer)
+  // Contact button listener (assumes <button id="contact-btn"> in HTML)
   document.getElementById("contact-btn")?.addEventListener("click", () => {
     window.open("/contact.html", "_blank");
   });
