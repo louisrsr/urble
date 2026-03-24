@@ -1,319 +1,40 @@
-document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-     DOM ELEMENTS
-  ========================== */
-  const els = {
-    startBtn: document.getElementById("start-btn"),
-    splash: document.getElementById("splash"),
-    ad: document.getElementById("ad"),
-    skipAdBtn: document.getElementById("skip-ad"),
-    round: document.getElementById("round"),
-    result: document.getElementById("result"),
-    statsBtn: document.getElementById("stats-btn"),
-    closeStats: document.getElementById("close-stats"),
-    statsModal: document.getElementById("stats-modal"),
-    statsContent: document.getElementById("stats-content"),
-    wordTitle: document.getElementById("word-title"),
-    optionsContainer: document.getElementById("options"),
-    progressFill: document.getElementById("progress-fill"),
-    progressBar: document.getElementById("progress-bar"),
-    resultText: document.getElementById("result-text"),
-    scoreText: document.getElementById("score-text"),
-    showAnswersBtn: document.getElementById("show-answers"),
-    shareBtn: document.getElementById("share-btn"),
-    titleClickable: document.getElementById("title-clickable"),
-    contactBtn: document.getElementById("contact-btn")
-  };
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Contact - URBLE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" style="text-align:center; padding:40px 20px; max-width:440px; margin:0 auto;">
+    <h1 id="contact-title" style="font-family: 'Lora', serif; color:#ffffff; font-size:2.8rem; margin-bottom:30px; cursor:pointer;">
+      Contact
+    </h1>
+    
+    <p style="font-size:1.1rem; color:var(--muted); margin-bottom:40px;">
+      Email: louisrsr@gmail.com
+    </p>
 
-  let gameWords = [];
-  let currentRound = 0;
-  let score = 0;
-  let playerAnswers = [];
-  const today = new Date().toDateString();
-  const TOTAL_ROUNDS = 5;
+    <button id="back-btn" 
+            style="font-family: 'Lora', serif; font-size:1.3rem; background:transparent; border:none; color:#ffffff; cursor:pointer; padding:10px 30px;">
+      Back to Game
+    </button>
+  </div>
 
-  /* =========================
-     UTILS
-  ========================== */
-  const shuffleSeed = (array, seed) => {
-    const result = array.slice();
-    let s = seed;
-    for (let i = result.length - 1; i > 0; i--) {
-      s = (s * 9301 + 49297) % 233280;
-      const j = Math.floor((s / 233280) * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-  };
+  <script>
+    const title = document.getElementById("contact-title");
+    const backBtn = document.getElementById("back-btn");
 
-  const cleanText = (text) => {
-    if (!text) return "";
-    return text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim();
-  };
+    title.addEventListener("mouseenter", () => title.style.color = "#e4f53e");
+    title.addEventListener("mouseleave", () => title.style.color = "#ffffff");
 
-  // Save mid-game progress
-  const saveProgress = () => {
-    if (gameWords.length === 0) return;
-    const progress = { gameWords, currentRound, score, playerAnswers, date: today };
-    localStorage.setItem("urbleCurrentGame", JSON.stringify(progress));
-  };
+    backBtn.addEventListener("mouseenter", () => backBtn.style.color = "#e4f53e");
+    backBtn.addEventListener("mouseleave", () => backBtn.style.color = "#ffffff");
 
-  const loadProgress = () => {
-    const saved = localStorage.getItem("urbleCurrentGame");
-    if (!saved) return false;
-    const progress = JSON.parse(saved);
-    if (progress.date !== today) {
-      localStorage.removeItem("urbleCurrentGame");
-      return false;
-    }
-    gameWords = progress.gameWords;
-    currentRound = progress.currentRound;
-    score = progress.score;
-    playerAnswers = progress.playerAnswers || [];
-    return true;
-  };
-
-  const clearProgress = () => localStorage.removeItem("urbleCurrentGame");
-
-  async function loadDailyWords() {
-    try {
-      const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      gameWords = await res.json();
-      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
-    } catch (err) {
-      console.error("Load failed:", err);
-      gameWords = [
-        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
-        { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
-        { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] },
-        { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
-        { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
-      ];
-    }
-  }
-
-  const showSection = (section) => {
-    section.classList.remove("hidden");
-    setTimeout(() => section.classList.add("visible"), 20);
-  };
-
-  const hideSection = (section) => {
-    section.classList.remove("visible");
-    setTimeout(() => section.classList.add("hidden"), 300);
-  };
-
-  /* Show resume message on splash and keep it visible */
-  const showResumeMessage = () => {
-    // Remove any old message
-    const old = els.splash.querySelector(".resume-msg");
-    if (old) old.remove();
-
-    const msg = document.createElement("p");
-    msg.className = "resume-msg";
-    msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
-    msg.style.color = "#e4f53e";
-    msg.style.fontWeight = "600";
-    msg.style.textAlign = "center";
-    msg.style.marginTop = "12px";
-    msg.style.fontSize = "1.05rem";
-    els.splash.appendChild(msg);
-  };
-
-  /* =========================
-     START FLOW
-  ========================== */
-  els.startBtn.addEventListener("click", async () => {
-    const hasProgress = loadProgress();
-
-    if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();   // This now stays on the splash screen
-    } else {
-      await loadDailyWords();
-      currentRound = 0;
-      score = 0;
-      playerAnswers = [];
-    }
-
-    hideSection(els.splash);
-    els.startBtn.classList.add("hidden");
-    els.statsBtn.style.display = "none";
-    showSection(els.ad);
-    els.skipAdBtn.disabled = true;
-    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
-  });
-
-  els.skipAdBtn.addEventListener("click", () => {
-    hideSection(els.ad);
-    showSection(els.progressBar);
-    startGame();
-  });
-
-  /* =========================
-     GAME
-  ========================== */
-  const startGame = () => {
-    document.body.classList.add("game-started");
-    hideSection(els.result);
-    showSection(els.round);
-    nextRound();
-  };
-
-  const nextRound = () => {
-    if (currentRound >= TOTAL_ROUNDS) {
-      endGame();
-      return;
-    }
-
-    const data = gameWords[currentRound];
-    els.wordTitle.textContent = cleanText(data.word);
-    els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
-
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100);
-    els.optionsContainer.innerHTML = "";
-
-    answers.forEach((answer) => {
-      const btn = document.createElement("button");
-      btn.textContent = cleanText(answer);
-      btn.addEventListener("click", () => handleAnswer(btn, answer, data.correct));
-      els.optionsContainer.appendChild(btn);
+    backBtn.addEventListener("click", () => {
+      window.location.href = "/";
     });
-
-    saveProgress();
-  };
-
-  const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
-    playerAnswers[currentRound] = selectedAnswer;
-
-    const buttons = els.optionsContainer.querySelectorAll("button");
-    buttons.forEach((btn) => {
-      btn.disabled = true;
-      if (btn.textContent === cleanText(correctAnswer)) btn.classList.add("option-correct");
-      if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) btn.classList.add("option-wrong");
-    });
-
-    if (selectedAnswer === correctAnswer) score++;
-
-    currentRound++;
-    setTimeout(nextRound, 1400);
-  };
-
-  const endGame = () => {
-    hideSection(els.round);
-    showSection(els.result);
-    els.progressFill.style.width = "100%";
-    els.resultText.textContent = "Game Complete!";
-    els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
-    els.statsBtn.style.display = "block";
-    clearProgress();
-    updateStats();
-  };
-
-  const updateStats = () => {
-    const stats = getStats();
-    stats.gamesPlayed++;
-    if (score >= 3) stats.wins++;
-    stats.lastPlayed = today;
-    if (!stats.scoreHistory) stats.scoreHistory = [];
-    stats.scoreHistory.push(score);
-    saveStats(stats);
-  };
-
-  /* Show Answers */
-  els.showAnswersBtn?.addEventListener("click", () => {
-    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
-
-    gameWords.forEach((data, i) => {
-      const userAnswer = playerAnswers[i] || "No answer";
-      const correct = cleanText(data.correct);
-      const user = cleanText(userAnswer);
-      const isCorrect = userAnswer === data.correct;
-
-      html += `
-        <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
-          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px; font-weight:700;">
-            ${cleanText(data.word)}
-          </div>
-          <div><strong>Your answer:</strong> ${user}</div>
-          <div><strong>Correct:</strong> ${correct}</div>
-        </div>
-      `;
-    });
-
-    els.statsContent.innerHTML = html;
-    showSection(els.statsModal);
-  });
-
-  /* Stats Modal */
-  els.statsBtn.addEventListener("click", () => {
-    const stats = getStats();
-    let scoreCounts = [0,0,0,0,0,0];
-
-    if (stats.scoreHistory) {
-      stats.scoreHistory.forEach(s => {
-        if (s >= 0 && s <= 5) scoreCounts[s]++;
-      });
-    }
-
-    let graphHTML = `<div style="display:flex; gap:8px; margin:20px 0; justify-content:center;">`;
-    for (let i = 0; i <= 5; i++) {
-      const count = scoreCounts[i];
-      const color = i >= 4 ? '#22c55e' : i >= 3 ? '#eab308' : '#ef4444';
-      graphHTML += `
-        <div style="text-align:center;">
-          <div style="background:${color}; width:32px; height:${Math.max(30, count * 12)}px; border-radius:6px; margin:0 auto;"></div>
-          <div style="font-size:0.85rem; margin-top:6px;">${i}/5</div>
-          <div style="font-size:0.8rem; color:var(--muted);">${count}</div>
-        </div>
-      `;
-    }
-    graphHTML += `</div>`;
-
-    els.statsContent.innerHTML = `
-      <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
-      <p><strong>Wins (3+):</strong> ${stats.wins || 0}</p>
-      <p><strong>Overall Accuracy:</strong> ${stats.scoreHistory ? Math.round((stats.scoreHistory.reduce((a,b)=>a+b,0) / (stats.scoreHistory.length * 5)) * 100) : 0}%</p>
-      <h3 style="margin:20px 0 10px; text-align:center;">Score Distribution</h3>
-      ${graphHTML}
-    `;
-    showSection(els.statsModal);
-  });
-
-  els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
-
-  /* Contact - same tab */
-  els.contactBtn?.addEventListener("click", () => {
-    window.location.href = "/contact.html";
-  });
-
-  /* Share */
-  els.shareBtn?.addEventListener("click", () => {
-    let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
-    gameWords.forEach((_, i) => {
-      grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥";
-    });
-    grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
-  });
-
-  /* Clickable title + hover lime */
-  els.titleClickable?.addEventListener("click", () => {
-    document.body.classList.remove("game-started");
-    hideSection(els.round);
-    hideSection(els.result);
-    hideSection(els.ad);
-    hideSection(els.progressBar);
-    showSection(els.splash);
-    els.startBtn.classList.remove("hidden");
-    els.statsBtn.style.display = "block";
-  });
-
-  if (els.titleClickable) {
-    const h1 = els.titleClickable.querySelector("h1");
-    els.titleClickable.style.cursor = "pointer";
-    els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
-    els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
-  }
-
-  window.addEventListener("beforeunload", saveProgress);
-});
+  </script>
+</body>
+</html>
