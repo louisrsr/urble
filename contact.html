@@ -1,18 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Contact - URBLE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app">
-    <h1>Contact</h1>
-    <p>Get in touch:</p>
-    <p>Email: louisrsr@gmail.com</p>
-    <br>
-    <button onclick="window.location.href='/'">Back to Game</button>
+  <div id="app" style="text-align:center; padding:40px 20px;">
+    <h1 id="contact-title" style="font-family: 'Lora', serif; color:#ffffff; font-size:2.8rem; margin-bottom:30px; cursor:pointer;">
+      Contact
+    </h1>
+    
+    <p style="font-size:1.1rem; color:var(--muted); max-width:400px; margin:0 auto 40px;">
+      Have feedback or suggestions? Feel free to reach out!
+    </p>
+
+    <button id="back-btn" 
+            style="font-family: 'Lora', serif; font-size:1.3rem; background:transparent; border:none; color:#ffffff; cursor:pointer; padding:10px 30px;">
+      Back to Game
+    </button>
   </div>
+
+  <script>
+    // Hover effect for title and back button (same lime green)
+    const title = document.getElementById("contact-title");
+    const backBtn = document.getElementById("back-btn");
+
+    title.addEventListener("mouseenter", () => title.style.color = "#e4f53e");
+    title.addEventListener("mouseleave", () => title.style.color = "#ffffff");
+
+    backBtn.addEventListener("mouseenter", () => backBtn.style.color = "#e4f53e");
+    backBtn.addEventListener("mouseleave", () => backBtn.style.color = "#ffffff");
+
+    backBtn.addEventListener("click", () => {
+      window.location.href = "/";
+    });
+  </script>
 </body>
 </html>
