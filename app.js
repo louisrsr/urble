@@ -35,17 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================
      UTILS
   ========================== */
-  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
-    gamesPlayed: 0,
-    wins: 0,
-    currentStreak: 0,
-    maxStreak: 0,
-    lastPlayed: null,
-    scoreHistory: []
-  };
-
-  const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
-
   const shuffleSeed = (array, seed) => {
     const result = array.slice();
     let s = seed;
@@ -118,9 +107,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const showMessage = (msg, duration = 5000) => {
     const msgEl = document.createElement("p");
     msgEl.textContent = msg;
-    msgEl.style.color = "var(--muted)";
+    msgEl.style.color = "#e4f53e";           // lime color to match buttons
+    msgEl.style.fontWeight = "600";
     msgEl.style.textAlign = "center";
-    msgEl.style.marginTop = "16px";
+    msgEl.style.marginTop = "12px";
     els.splash.appendChild(msgEl);
     setTimeout(() => msgEl.remove(), duration);
   };
@@ -132,7 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`, 7000);
+      // Show resume message on splash BEFORE hiding it
+      showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`, 6500);
     } else {
       await loadDailyWords();
       currentRound = 0;
@@ -249,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats Modal - Wordle-style graph */
+  /* Stats Modal */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let scoreCounts = [0,0,0,0,0,0];
@@ -301,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title + hover green (#e4f53e) */
+  /* Clickable title + hover effect */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
@@ -314,15 +305,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if (els.titleClickable) {
-    els.titleClickable.style.cursor = "pointer";
-    els.titleClickable.style.transition = "color 0.2s ease";
     const h1 = els.titleClickable.querySelector("h1");
-    els.titleClickable.addEventListener("mouseenter", () => {
-      h1.style.color = "#e4f53e";
-    });
-    els.titleClickable.addEventListener("mouseleave", () => {
-      h1.style.color = "#ffffff";
-    });
+    els.titleClickable.style.cursor = "pointer";
+    els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
+    els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
   }
 
   window.addEventListener("beforeunload", saveProgress);
