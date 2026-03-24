@@ -191,10 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* =========================
-     SHOW ANSWERS (Fixed + Lora font)
+     SHOW ANSWERS (Fixed with Lora font)
   ========================== */
   els.showAnswersBtn?.addEventListener("click", () => {
-    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px;">Your Answers</h2>`;
+    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
 
     gameWords.forEach((data, i) => {
       const userAnswer = playerAnswers[i] || "No answer";
@@ -204,11 +204,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       html += `
         <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
-          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px;">
+          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px; font-weight:700;">
             ${cleanText(data.word)}
           </div>
           <div><strong>Your answer:</strong> ${user}</div>
-          <div><strong>Correct:</strong> ${correct}</div>
+          <div><strong>Correct answer:</strong> ${correct}</div>
         </div>
       `;
     });
