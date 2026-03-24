@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Run on page load
+  // Run immediately
   updateSplash();
 
   /* START FLOW */
