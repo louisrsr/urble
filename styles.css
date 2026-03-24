@@ -38,6 +38,7 @@ header {
 
 .title {
   transition: all 0.6s ease;
+  cursor: pointer;
 }
 
 .title h1 {
@@ -60,6 +61,12 @@ header {
 .tagline {
   margin: 0;
   font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.tagline-sub {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
   color: var(--muted);
 }
 
@@ -88,6 +95,12 @@ button:active { transform: scale(0.96); }
   background: var(--primary);
   color: #000;
   font-weight: 700;
+}
+
+.secondary-btn {
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--card-border);
 }
 
 .card,
@@ -182,6 +195,31 @@ button:active { transform: scale(0.96); }
 
 .modal-header h2 { margin: 0; font-family: 'Lora', serif; }
 
+/* Contact button styling */
+#contact-btn {
+  font-family: 'Lora', serif;
+  font-size: 1.1rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 20px;
+  margin: 0 auto;
+  display: block;
+}
+
+#contact-btn:hover {
+  color: var(--primary);
+}
+
+/* Stats button yellow like Play */
+.secondary-btn {
+  background: var(--primary);
+  color: #000;
+  font-weight: 700;
+}
+
+/* Mobile fit */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
   .title h1 { font-size: 2.6rem; }
