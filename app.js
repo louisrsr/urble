@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentStreak: 0,
     maxStreak: 0,
     lastPlayed: null,
-    scoreHistory: [] 
+    scoreHistory: []
   };
 
   const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
@@ -69,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("urbleCurrentGame", JSON.stringify(progress));
   };
 
-  // Load saved progress
   const loadProgress = () => {
     const saved = localStorage.getItem("urbleCurrentGame");
     if (!saved) return false;
@@ -127,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* =========================
-     START FLOW - Resume progress
+     START FLOW
   ========================== */
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
@@ -182,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
       els.optionsContainer.appendChild(btn);
     });
 
-    saveProgress(); // auto-save after each round
+    saveProgress();
   };
 
   const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
@@ -223,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* =========================
-     SHOW ANSWERS (Lora font, no emojis)
+     SHOW ANSWERS
   ========================== */
   els.showAnswersBtn?.addEventListener("click", () => {
     let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
@@ -288,12 +287,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  /* Contact button - opens in SAME tab at urble.co.uk/contact */
+  /* Contact - same tab */
   els.contactBtn?.addEventListener("click", () => {
     window.location.href = "/contact.html";
   });
 
-  /* Share button */
+  /* Share */
   els.shareBtn?.addEventListener("click", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
     gameWords.forEach((_, i) => {
@@ -303,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title - returns to start */
+  /* Clickable title - returns to start + hover green */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
@@ -315,6 +314,18 @@ document.addEventListener("DOMContentLoaded", () => {
     els.statsBtn.style.display = "block";
   });
 
-  // Auto-save progress when leaving page
+  // Hover effect for URBLE title (turns green)
+  if (els.titleClickable) {
+    els.titleClickable.style.cursor = "pointer";
+    els.titleClickable.style.transition = "color 0.2s ease";
+    els.titleClickable.addEventListener("mouseenter", () => {
+      els.titleClickable.querySelector("h1").style.color = "#22c55e";
+    });
+    els.titleClickable.addEventListener("mouseleave", () => {
+      els.titleClickable.querySelector("h1").style.color = "#ffffff";
+    });
+  }
+
+  // Auto-save progress
   window.addEventListener("beforeunload", saveProgress);
 });
