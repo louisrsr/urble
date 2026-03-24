@@ -103,21 +103,21 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Persistent resume message on splash screen */
+  /* Show resume message on splash and keep it visible */
   const showResumeMessage = () => {
     // Remove any old message
-    const oldMsg = els.splash.querySelector(".resume-msg");
-    if (oldMsg) oldMsg.remove();
+    const old = els.splash.querySelector(".resume-msg");
+    if (old) old.remove();
 
-    const msgEl = document.createElement("p");
-    msgEl.className = "resume-msg";
-    msgEl.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
-    msgEl.style.color = "#e4f53e";
-    msgEl.style.fontWeight = "600";
-    msgEl.style.textAlign = "center";
-    msgEl.style.marginTop = "12px";
-    msgEl.style.fontSize = "1.05rem";
-    els.splash.appendChild(msgEl);
+    const msg = document.createElement("p");
+    msg.className = "resume-msg";
+    msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
+    msg.style.color = "#e4f53e";
+    msg.style.fontWeight = "600";
+    msg.style.textAlign = "center";
+    msg.style.marginTop = "12px";
+    msg.style.fontSize = "1.05rem";
+    els.splash.appendChild(msg);
   };
 
   /* =========================
@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();   // Show message on splash BEFORE hiding it
+      showResumeMessage();   // This now stays on the splash screen
     } else {
       await loadDailyWords();
       currentRound = 0;
@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title + hover lime green */
+  /* Clickable title + hover lime */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
