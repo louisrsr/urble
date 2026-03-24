@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
     } catch (err) {
       console.error("Load failed:", err);
-      showMessage("Couldn't load daily words. Using demo mode.", 8000);
       gameWords = [
         { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
         { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
@@ -104,26 +103,31 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  const showMessage = (msg, duration = 5000) => {
+  /* Persistent resume message on splash screen */
+  const showResumeMessage = () => {
+    // Remove any old message
+    const oldMsg = els.splash.querySelector(".resume-msg");
+    if (oldMsg) oldMsg.remove();
+
     const msgEl = document.createElement("p");
-    msgEl.textContent = msg;
-    msgEl.style.color = "#e4f53e";           // lime color to match buttons
+    msgEl.className = "resume-msg";
+    msgEl.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
+    msgEl.style.color = "#e4f53e";
     msgEl.style.fontWeight = "600";
     msgEl.style.textAlign = "center";
     msgEl.style.marginTop = "12px";
+    msgEl.style.fontSize = "1.05rem";
     els.splash.appendChild(msgEl);
-    setTimeout(() => msgEl.remove(), duration);
   };
 
   /* =========================
-     START FLOW - Resume message
+     START FLOW
   ========================== */
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      // Show resume message on splash BEFORE hiding it
-      showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`, 6500);
+      showResumeMessage();   // Show message on splash BEFORE hiding it
     } else {
       await loadDailyWords();
       currentRound = 0;
@@ -292,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title + hover effect */
+  /* Clickable title + hover lime green */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
