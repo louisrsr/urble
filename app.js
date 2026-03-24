@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show resume message on splash immediately if progress exists */
+  /* Show resume message immediately on page load */
   const showResumeMessage = () => {
     const old = els.splash.querySelector(".resume-msg");
     if (old) old.remove();
@@ -119,22 +119,17 @@ document.addEventListener("DOMContentLoaded", () => {
     els.splash.appendChild(msg);
   };
 
-  /* =========================
-     PAGE LOAD - Show resume message immediately
-  ========================== */
-  // Run on page load
+  /* Page load - show resume or welcome */
   (async () => {
     const hasProgress = loadProgress();
-
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();        // Shows immediately on splash
+      showResumeMessage();
     } else {
-      // No progress - show default welcome
-      const defaultMsg = document.createElement("p");
-      defaultMsg.textContent = "Welcome back!";
-      defaultMsg.style.color = "var(--muted)";
-      defaultMsg.style.textAlign = "center";
-      els.splash.appendChild(defaultMsg);
+      const welcome = document.createElement("p");
+      welcome.textContent = "Welcome back!";
+      welcome.style.color = "var(--muted)";
+      welcome.style.textAlign = "center";
+      els.splash.appendChild(welcome);
     }
   })();
 
@@ -251,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats Modal */
+  /* Stats Modal - Wordle-style graph */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let scoreCounts = [0,0,0,0,0,0];
@@ -303,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title */
+  /* Clickable title + hover lime */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
