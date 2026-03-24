@@ -29,72 +29,97 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  /* =========================
-     SAVE / LOAD PROGRESS
-  ========================== */
+  /* UTILS */
+  const shuffleSeed = (array, seed) => {
+    const result = array.slice();
+    let s = seed;
+    for (let i = result.length - 1; i > 0; i--) {
+      s = (s * 9301 + 49297) % 233280;
+      const j = Math.floor((s / 233280) * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  };
+
+  const cleanText = (text) => {
+    if (!text) return "";
+    return text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim();
+  };
+
   const saveProgress = () => {
     if (gameWords.length === 0) return;
-    localStorage.setItem("urbleCurrentGame", JSON.stringify({
-      gameWords, currentRound, score, playerAnswers, date: today
-    }));
+    const progress = { gameWords, currentRound, score, playerAnswers, date: today };
+    localStorage.setItem("urbleCurrentGame", JSON.stringify(progress));
   };
 
   const loadProgress = () => {
     const saved = localStorage.getItem("urbleCurrentGame");
     if (!saved) return false;
-    const p = JSON.parse(saved);
-    if (p.date !== today) {
+    const progress = JSON.parse(saved);
+    if (progress.date !== today) {
       localStorage.removeItem("urbleCurrentGame");
       return false;
     }
-    gameWords = p.gameWords;
-    currentRound = p.currentRound;
-    score = p.score;
-    playerAnswers = p.playerAnswers || [];
+    gameWords = progress.gameWords;
+    currentRound = progress.currentRound;
+    score = progress.score;
+    playerAnswers = progress.playerAnswers || [];
     return true;
   };
 
   const clearProgress = () => localStorage.removeItem("urbleCurrentGame");
 
-  /* =========================
-     SPLASH MESSAGE (IMMEDIATE)
-  ========================== */
-  const updateSplashMessage = () => {
-    els.splash.innerHTML = "";
-
-    const hasProgress = loadProgress();
-
-    if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      const msg = document.createElement("p");
-      msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
-      msg.style.color = "#e4f53e";
-      msg.style.fontWeight = "600";
-      msg.style.textAlign = "center";
-      msg.style.marginTop = "30px";
-      msg.style.fontSize = "1.15rem";
-      els.splash.appendChild(msg);
-    } else {
-      const welcome = document.createElement("p");
-      welcome.textContent = "Welcome back!";
-      welcome.style.color = "var(--muted)";
-      welcome.style.textAlign = "center";
-      welcome.style.marginTop = "30px";
-      els.splash.appendChild(welcome);
+  async function loadDailyWords() {
+    try {
+      const res = await fetch("https://urble.louisrsr.workers.dev/daily");
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      gameWords = await res.json();
+      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
+    } catch (err) {
+      console.error("Load failed:", err);
+      gameWords = [
+        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
+        { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
+        { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] },
+        { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
+        { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
+      ];
     }
+  }
+
+  const showSection = (section) => {
+    section.classList.remove("hidden");
+    setTimeout(() => section.classList.add("visible"), 20);
   };
 
-  updateSplashMessage();   // ← Runs immediately on page load
+  const hideSection = (section) => {
+    section.classList.remove("visible");
+    setTimeout(() => section.classList.add("hidden"), 300);
+  };
 
-  /* =========================
-     START GAME
-  ========================== */
-  els.startBtn.addEventListener("click", async () => {
+  const showMessage = (msg, duration = 5000) => {
+    els.splash.innerHTML = `<p style="color:#e4f53e; font-weight:600; text-align:center; margin-top:30px; font-size:1.1rem;">${msg}</p>`;
+  };
+
+  /* PAGE LOAD - Show correct message immediately */
+  (async () => {
+    const hasProgress = loadProgress();
+    if (hasProgress && currentRound < TOTAL_ROUNDS) {
+      showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`);
+    } else {
+      await loadDailyWords();
+      showMessage("Welcome back!");
+    }
+  })();
+
+  /* START FLOW */
+  els.startBtn.addEventListener("click", () => {
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
     showSection(els.ad);
     els.skipAdBtn.disabled = true;
-    setTimeout(() => els.skipAdBtn.disabled = false, 2500);
+    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
   });
 
   els.skipAdBtn.addEventListener("click", () => {
@@ -103,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   });
 
+  /* GAME */
   const startGame = () => {
     document.body.classList.add("game-started");
     hideSection(els.result);
@@ -111,16 +137,19 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const nextRound = () => {
-    if (currentRound >= TOTAL_ROUNDS) return endGame();
+    if (currentRound >= TOTAL_ROUNDS) {
+      endGame();
+      return;
+    }
 
     const data = gameWords[currentRound];
     els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound);
+    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100);
     els.optionsContainer.innerHTML = "";
 
-    answers.forEach(answer => {
+    answers.forEach((answer) => {
       const btn = document.createElement("button");
       btn.textContent = cleanText(answer);
       btn.addEventListener("click", () => handleAnswer(btn, answer, data.correct));
@@ -130,15 +159,18 @@ document.addEventListener("DOMContentLoaded", () => {
     saveProgress();
   };
 
-  const handleAnswer = (btn, selected, correct) => {
-    playerAnswers[currentRound] = selected;
-    const allBtns = els.optionsContainer.querySelectorAll("button");
-    allBtns.forEach(b => {
-      b.disabled = true;
-      if (b.textContent === cleanText(correct)) b.classList.add("option-correct");
-      if (b.textContent === cleanText(selected) && selected !== correct) b.classList.add("option-wrong");
+  const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
+    playerAnswers[currentRound] = selectedAnswer;
+
+    const buttons = els.optionsContainer.querySelectorAll("button");
+    buttons.forEach((btn) => {
+      btn.disabled = true;
+      if (btn.textContent === cleanText(correctAnswer)) btn.classList.add("option-correct");
+      if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) btn.classList.add("option-wrong");
     });
-    if (selected === correct) score++;
+
+    if (selectedAnswer === correctAnswer) score++;
+
     currentRound++;
     setTimeout(nextRound, 1400);
   };
@@ -164,41 +196,99 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* Stats Modal */
+  /* Show Answers */
+  els.showAnswersBtn?.addEventListener("click", () => {
+    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
+
+    gameWords.forEach((data, i) => {
+      const userAnswer = playerAnswers[i] || "No answer";
+      const correct = cleanText(data.correct);
+      const user = cleanText(userAnswer);
+      const isCorrect = userAnswer === data.correct;
+
+      html += `
+        <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
+          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px; font-weight:700;">
+            ${cleanText(data.word)}
+          </div>
+          <div><strong>Your answer:</strong> ${user}</div>
+          <div><strong>Correct:</strong> ${correct}</div>
+        </div>
+      `;
+    });
+
+    els.statsContent.innerHTML = html;
+    showSection(els.statsModal);
+  });
+
+  /* Stats Modal - Wordle-style graph */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
-    let counts = [0,0,0,0,0,0];
-    if (stats.scoreHistory) stats.scoreHistory.forEach(s => counts[s]++);
+    let scoreCounts = [0,0,0,0,0,0];
 
-    let bars = `<div style="display:flex; gap:8px; justify-content:center; margin:20px 0;">`;
-    for (let i = 0; i <= 5; i++) {
-      const color = i >= 4 ? '#22c55e' : i >= 3 ? '#eab308' : '#ef4444';
-      bars += `<div style="text-align:center;">
-        <div style="background:${color}; width:32px; height:${Math.max(30, counts[i]*12)}px; border-radius:6px; margin:0 auto;"></div>
-        <div style="font-size:0.85rem;">${i}/5</div>
-        <div style="font-size:0.8rem; color:var(--muted);">${counts[i]}</div>
-      </div>`;
+    if (stats.scoreHistory) {
+      stats.scoreHistory.forEach(s => {
+        if (s >= 0 && s <= 5) scoreCounts[s]++;
+      });
     }
-    bars += `</div>`;
+
+    let graphHTML = `<div style="display:flex; gap:8px; margin:20px 0; justify-content:center;">`;
+    for (let i = 0; i <= 5; i++) {
+      const count = scoreCounts[i];
+      const color = i >= 4 ? '#22c55e' : i >= 3 ? '#eab308' : '#ef4444';
+      graphHTML += `
+        <div style="text-align:center;">
+          <div style="background:${color}; width:32px; height:${Math.max(30, count * 12)}px; border-radius:6px; margin:0 auto;"></div>
+          <div style="font-size:0.85rem; margin-top:6px;">${i}/5</div>
+          <div style="font-size:0.8rem; color:var(--muted);">${count}</div>
+        </div>
+      `;
+    }
+    graphHTML += `</div>`;
 
     els.statsContent.innerHTML = `
       <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
       <p><strong>Wins (3+):</strong> ${stats.wins || 0}</p>
       <p><strong>Overall Accuracy:</strong> ${stats.scoreHistory ? Math.round((stats.scoreHistory.reduce((a,b)=>a+b,0) / (stats.scoreHistory.length * 5)) * 100) : 0}%</p>
-      <h3 style="text-align:center; margin:20px 0 10px;">Score Distribution</h3>
-      ${bars}
+      <h3 style="margin:20px 0 10px; text-align:center;">Score Distribution</h3>
+      ${graphHTML}
     `;
     showSection(els.statsModal);
   });
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  /* Other buttons */
-  els.contactBtn?.addEventListener("click", () => window.location.href = "/contact.html");
-  els.titleClickable?.addEventListener("click", () => location.reload());
+  /* Contact */
+  els.contactBtn?.addEventListener("click", () => {
+    window.location.href = "/contact.html";
+  });
+
+  /* Share */
+  els.shareBtn?.addEventListener("click", () => {
+    let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
+    gameWords.forEach((_, i) => {
+      grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥";
+    });
+    grid += `\n\nPlay at https://www.urble.co.uk`;
+    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
+  });
+
+  /* Clickable title */
+  els.titleClickable?.addEventListener("click", () => {
+    document.body.classList.remove("game-started");
+    hideSection(els.round);
+    hideSection(els.result);
+    hideSection(els.ad);
+    hideSection(els.progressBar);
+    showSection(els.splash);
+    els.startBtn.classList.remove("hidden");
+    els.statsBtn.style.display = "block";
+    updateSplash(); // refresh message
+  });
 
   if (els.titleClickable) {
     const h1 = els.titleClickable.querySelector("h1");
+    els.titleClickable.style.cursor = "pointer";
     els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
     els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
   }
