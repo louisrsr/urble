@@ -103,9 +103,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show resume message on splash and keep it visible */
+  /* Show persistent resume message on splash */
   const showResumeMessage = () => {
-    // Remove any old message
+    // Remove any previous message
     const old = els.splash.querySelector(".resume-msg");
     if (old) old.remove();
 
@@ -115,8 +115,8 @@ document.addEventListener("DOMContentLoaded", () => {
     msg.style.color = "#e4f53e";
     msg.style.fontWeight = "600";
     msg.style.textAlign = "center";
-    msg.style.marginTop = "12px";
-    msg.style.fontSize = "1.05rem";
+    msg.style.margin = "16px 0 0";
+    msg.style.fontSize = "1.1rem";
     els.splash.appendChild(msg);
   };
 
@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();   // This now stays on the splash screen
+      showResumeMessage();   // This stays visible on splash
     } else {
       await loadDailyWords();
       currentRound = 0;
@@ -135,12 +135,15 @@ document.addEventListener("DOMContentLoaded", () => {
       playerAnswers = [];
     }
 
-    hideSection(els.splash);
-    els.startBtn.classList.add("hidden");
-    els.statsBtn.style.display = "none";
-    showSection(els.ad);
-    els.skipAdBtn.disabled = true;
-    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
+    // Small delay so message is visible before ad
+    setTimeout(() => {
+      hideSection(els.splash);
+      els.startBtn.classList.add("hidden");
+      els.statsBtn.style.display = "none";
+      showSection(els.ad);
+      els.skipAdBtn.disabled = true;
+      setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
+    }, 800); // give message time to show
   });
 
   els.skipAdBtn.addEventListener("click", () => {
@@ -281,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  /* Contact - same tab */
+  /* Contact */
   els.contactBtn?.addEventListener("click", () => {
     window.location.href = "/contact.html";
   });
@@ -296,7 +299,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title + hover lime */
+  /* Clickable title */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
