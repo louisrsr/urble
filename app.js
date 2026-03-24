@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  /* =========================
+     DOM ELEMENTS
+  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -29,7 +32,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  /* UTILS */
+  /* =========================
+     STATS + PROGRESS
+  ========================== */
+  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
+    gamesPlayed: 0,
+    wins: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastPlayed: null,
+    scoreHistory: []
+  };
+
+  const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
+
   const shuffleSeed = (array, seed) => {
     const result = array.slice();
     let s = seed;
@@ -97,23 +113,36 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  const showMessage = (msg, duration = 5000) => {
-    els.splash.innerHTML = `<p style="color:#e4f53e; font-weight:600; text-align:center; margin-top:30px; font-size:1.1rem;">${msg}</p>`;
+  /* Show message immediately on page load */
+  const updateSplash = () => {
+    els.splash.innerHTML = "";
+
+    const hasProgress = loadProgress();
+
+    if (hasProgress && currentRound < TOTAL_ROUNDS) {
+      const msg = document.createElement("p");
+      msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
+      msg.style.color = "#e4f53e";
+      msg.style.fontWeight = "600";
+      msg.style.textAlign = "center";
+      msg.style.marginTop = "30px";
+      msg.style.fontSize = "1.1rem";
+      els.splash.appendChild(msg);
+    } else {
+      const welcome = document.createElement("p");
+      welcome.textContent = "Welcome back!";
+      welcome.style.color = "var(--muted)";
+      welcome.style.textAlign = "center";
+      welcome.style.marginTop = "30px";
+      els.splash.appendChild(welcome);
+    }
   };
 
-  /* PAGE LOAD - Show correct message immediately */
-  (async () => {
-    const hasProgress = loadProgress();
-    if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`);
-    } else {
-      await loadDailyWords();
-      showMessage("Welcome back!");
-    }
-  })();
+  // Run on page load
+  updateSplash();
 
   /* START FLOW */
-  els.startBtn.addEventListener("click", () => {
+  els.startBtn.addEventListener("click", async () => {
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
@@ -221,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats Modal - Wordle-style graph */
+  /* Stats Modal */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let scoreCounts = [0,0,0,0,0,0];
@@ -283,7 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.splash);
     els.startBtn.classList.remove("hidden");
     els.statsBtn.style.display = "block";
-    updateSplash(); // refresh message
+    updateSplash();
   });
 
   if (els.titleClickable) {
