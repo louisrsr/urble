@@ -103,27 +103,22 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show resume message immediately on page load */
-  const showResumeMessage = () => {
-    const old = els.splash.querySelector(".resume-msg");
-    if (old) old.remove();
+  /* Show message on splash immediately */
+  const updateSplashMessage = () => {
+    // Clear previous messages
+    els.splash.innerHTML = "";
 
-    const msg = document.createElement("p");
-    msg.className = "resume-msg";
-    msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
-    msg.style.color = "#e4f53e";
-    msg.style.fontWeight = "600";
-    msg.style.textAlign = "center";
-    msg.style.margin = "16px 0 0";
-    msg.style.fontSize = "1.1rem";
-    els.splash.appendChild(msg);
-  };
-
-  /* Page load - show resume or welcome */
-  (async () => {
     const hasProgress = loadProgress();
+
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();
+      const msg = document.createElement("p");
+      msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
+      msg.style.color = "#e4f53e";
+      msg.style.fontWeight = "600";
+      msg.style.textAlign = "center";
+      msg.style.marginTop = "20px";
+      msg.style.fontSize = "1.1rem";
+      els.splash.appendChild(msg);
     } else {
       const welcome = document.createElement("p");
       welcome.textContent = "Welcome back!";
@@ -131,7 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
       welcome.style.textAlign = "center";
       els.splash.appendChild(welcome);
     }
-  })();
+  };
+
+  // Run on page load
+  updateSplashMessage();
 
   /* =========================
      START FLOW
@@ -298,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title + hover lime */
+  /* Clickable title */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
@@ -308,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.splash);
     els.startBtn.classList.remove("hidden");
     els.statsBtn.style.display = "block";
+    updateSplashMessage(); // refresh message when returning to start
   });
 
   if (els.titleClickable) {
