@@ -126,15 +126,18 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* =========================
-     START FLOW
+     START FLOW - Resume message
   ========================== */
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
 
-    if (hasProgress) {
+    if (hasProgress && currentRound < TOTAL_ROUNDS) {
       showMessage(`You are on question ${currentRound + 1}/5 — let's finish this!`, 7000);
     } else {
       await loadDailyWords();
+      currentRound = 0;
+      score = 0;
+      playerAnswers = [];
     }
 
     hideSection(els.splash);
@@ -221,9 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* =========================
-     SHOW ANSWERS
-  ========================== */
+  /* Show Answers */
   els.showAnswersBtn?.addEventListener("click", () => {
     let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
 
@@ -248,9 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* =========================
-     STATS MODAL - Wordle-style graph
-  ========================== */
+  /* Stats Modal - Wordle-style graph */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let scoreCounts = [0,0,0,0,0,0];
@@ -302,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* Clickable title - returns to start + hover green */
+  /* Clickable title + hover green (#e4f53e) */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
@@ -314,18 +313,17 @@ document.addEventListener("DOMContentLoaded", () => {
     els.statsBtn.style.display = "block";
   });
 
-  // Hover effect for URBLE title (turns green)
   if (els.titleClickable) {
     els.titleClickable.style.cursor = "pointer";
     els.titleClickable.style.transition = "color 0.2s ease";
+    const h1 = els.titleClickable.querySelector("h1");
     els.titleClickable.addEventListener("mouseenter", () => {
-      els.titleClickable.querySelector("h1").style.color = "#22c55e";
+      h1.style.color = "#e4f53e";
     });
     els.titleClickable.addEventListener("mouseleave", () => {
-      els.titleClickable.querySelector("h1").style.color = "#ffffff";
+      h1.style.color = "#ffffff";
     });
   }
 
-  // Auto-save progress
   window.addEventListener("beforeunload", saveProgress);
 });
