@@ -1,7 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-     DOM ELEMENTS
-  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -51,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim();
   };
 
-  // Save mid-game progress
   const saveProgress = () => {
     if (gameWords.length === 0) return;
     const progress = { gameWords, currentRound, score, playerAnswers, date: today };
@@ -103,10 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show message on splash immediately */
-  const updateSplashMessage = () => {
-    // Clear previous messages
-    els.splash.innerHTML = "";
+  /* Show correct message on splash immediately */
+  const updateSplash = () => {
+    els.splash.innerHTML = ""; // clear everything
 
     const hasProgress = loadProgress();
 
@@ -116,20 +111,21 @@ document.addEventListener("DOMContentLoaded", () => {
       msg.style.color = "#e4f53e";
       msg.style.fontWeight = "600";
       msg.style.textAlign = "center";
-      msg.style.marginTop = "20px";
-      msg.style.fontSize = "1.1rem";
+      msg.style.marginTop = "30px";
+      msg.style.fontSize = "1.15rem";
       els.splash.appendChild(msg);
     } else {
       const welcome = document.createElement("p");
       welcome.textContent = "Welcome back!";
       welcome.style.color = "var(--muted)";
       welcome.style.textAlign = "center";
+      welcome.style.marginTop = "30px";
       els.splash.appendChild(welcome);
     }
   };
 
-  // Run on page load
-  updateSplashMessage();
+  // Run immediately on page load
+  updateSplash();
 
   /* =========================
      START FLOW
@@ -244,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats Modal - Wordle-style graph */
+  /* Stats Modal */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let scoreCounts = [0,0,0,0,0,0];
@@ -306,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.splash);
     els.startBtn.classList.remove("hidden");
     els.statsBtn.style.display = "block";
-    updateSplashMessage(); // refresh message when returning to start
+    updateSplash(); // refresh message when returning
   });
 
   if (els.titleClickable) {
