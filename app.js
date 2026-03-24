@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  /* =========================
+     DOM ELEMENTS
+  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -30,13 +33,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
+  /* =========================
+     UTILS
+  ========================== */
   const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
     gamesPlayed: 0,
     wins: 0,
     currentStreak: 0,
     maxStreak: 0,
     lastPlayed: null,
-    scoreHistory: [] // array of scores per game (e.g. [3,5,2,4])
   };
 
   const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
@@ -182,73 +187,54 @@ document.addEventListener("DOMContentLoaded", () => {
     stats.gamesPlayed++;
     if (score >= 3) stats.wins++;
     stats.lastPlayed = today;
-
-    // Save score history for stats
-    if (!stats.scoreHistory) stats.scoreHistory = [];
-    stats.scoreHistory.push(score);
-
     saveStats(stats);
   };
 
   /* =========================
-     STATS MODAL (Improved)
+     SHOW ANSWERS (Fixed + Lora font)
   ========================== */
-  els.statsBtn.addEventListener("click", () => {
-    const stats = getStats();
-    let totalGames = stats.gamesPlayed || 0;
-    let totalCorrect = 0;
-    let scoreCounts = [0,0,0,0,0,0]; // index 0 = 0/5, 1 = 1/5, ..., 5 = 5/5
+  els.showAnswersBtn?.addEventListener("click", () => {
+    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px;">Your Answers</h2>`;
 
-    if (stats.scoreHistory && stats.scoreHistory.length > 0) {
-      stats.scoreHistory.forEach(s => {
-        totalCorrect += s;
-        if (s >= 0 && s <= 5) scoreCounts[s]++;
-      });
-    }
+    gameWords.forEach((data, i) => {
+      const userAnswer = playerAnswers[i] || "No answer";
+      const correct = cleanText(data.correct);
+      const user = cleanText(userAnswer);
+      const isCorrect = userAnswer === data.correct;
 
-    const overallScore = totalGames > 0 ? Math.round((totalCorrect / (totalGames * TOTAL_ROUNDS)) * 100) : 0;
-
-    let html = `
-      <p><strong>Games Played:</strong> ${totalGames}</p>
-      <p><strong>Total Correct Answers:</strong> ${totalCorrect} / ${totalGames * TOTAL_ROUNDS}</p>
-      <p><strong>Overall Accuracy:</strong> ${overallScore}%</p>
-      <p><strong>Wins (3+):</strong> ${stats.wins || 0}</p>
-      <p><strong>Current Streak:</strong> ${stats.currentStreak || 0}</p>
-      <p><strong>Max Streak:</strong> ${stats.maxStreak || 0}</p>
-      <hr>
-      <h3>Score Distribution</h3>
-      <div class="pie-chart" style="margin:20px auto; width:200px; height:200px; border-radius:50%; background: conic-gradient(
-        #22c55e ${scoreCounts[5]/totalGames*360}deg,
-        #a3e635 ${scoreCounts[5]/totalGames*360}deg ${ (scoreCounts[5]+scoreCounts[4])/totalGames*360 }deg,
-        #eab308 ${ (scoreCounts[5]+scoreCounts[4])/totalGames*360 }deg ${ (scoreCounts[5]+scoreCounts[4]+scoreCounts[3])/totalGames*360 }deg,
-        #f59e0b ${ (scoreCounts[5]+scoreCounts[4]+scoreCounts[3])/totalGames*360 }deg ${ (scoreCounts[5]+scoreCounts[4]+scoreCounts[3]+scoreCounts[2])/totalGames*360 }deg,
-        #ef4444 ${ (scoreCounts[5]+scoreCounts[4]+scoreCounts[3]+scoreCounts[2])/totalGames*360 }deg 360deg
-      );"></div>
-      <p style="text-align:center; margin-top:10px;">
-        5/5: ${scoreCounts[5]} • 4/5: ${scoreCounts[4]} • 3/5: ${scoreCounts[3]} • 2/5: ${scoreCounts[2]} • 1/5: ${scoreCounts[1]} • 0/5: ${scoreCounts[0]}
-      </p>
-    `;
+      html += `
+        <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
+          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px;">
+            ${cleanText(data.word)}
+          </div>
+          <div><strong>Your answer:</strong> ${user}</div>
+          <div><strong>Correct:</strong> ${correct}</div>
+        </div>
+      `;
+    });
 
     els.statsContent.innerHTML = html;
     showSection(els.statsModal);
   });
 
-  els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
-
-  /* Clickable title - resets to start */
-  els.titleClickable.addEventListener("click", () => {
-    document.body.classList.remove("game-started");
-    hideSection(els.round);
-    hideSection(els.result);
-    hideSection(els.ad);
-    hideSection(els.progressBar);
-    showSection(els.splash);
-    els.startBtn.classList.remove("hidden");
-    els.statsBtn.style.display = "block";
+  /* =========================
+     STATS MODAL & CONTACT
+  ========================== */
+  els.statsBtn.addEventListener("click", () => {
+    const stats = getStats();
+    els.statsContent.innerHTML = `
+      <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
+      <p><strong>Wins (3+):</strong> ${stats.wins || 0}</p>
+      <p><strong>Current Streak:</strong> ${stats.currentStreak || 0}</p>
+      <p><strong>Max Streak:</strong> ${stats.maxStreak || 0}</p>
+    `;
+    showSection(els.statsModal);
   });
 
+  els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
+
   /* Contact button */
-  els.contactBtn.addEventListener("click", () => {
+  els.contactBtn?.addEventListener("click", () => {
     window.open("/contact.html", "_blank");
   });
 
@@ -258,13 +244,29 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   });
 
-  /* Share button (kept from previous version) */
+  /* Share button */
   els.shareBtn?.addEventListener("click", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
     gameWords.forEach((_, i) => {
       grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥";
     });
     grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
+    navigator.clipboard.writeText(grid).then(() => {
+      alert("Copied to clipboard!");
+    }).catch(() => {
+      prompt("Copy this to share:\n\n" + grid);
+    });
+  });
+
+  /* Clickable title - returns to start */
+  els.titleClickable?.addEventListener("click", () => {
+    document.body.classList.remove("game-started");
+    hideSection(els.round);
+    hideSection(els.result);
+    hideSection(els.ad);
+    hideSection(els.progressBar);
+    showSection(els.splash);
+    els.startBtn.classList.remove("hidden");
+    els.statsBtn.style.display = "block";
   });
 });
