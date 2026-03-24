@@ -103,9 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show persistent resume message on splash */
+  /* Show resume message on splash immediately if progress exists */
   const showResumeMessage = () => {
-    // Remove any previous message
     const old = els.splash.querySelector(".resume-msg");
     if (old) old.remove();
 
@@ -121,29 +120,34 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* =========================
-     START FLOW
+     PAGE LOAD - Show resume message immediately
   ========================== */
-  els.startBtn.addEventListener("click", async () => {
+  // Run on page load
+  (async () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      showResumeMessage();   // This stays visible on splash
+      showResumeMessage();        // Shows immediately on splash
     } else {
-      await loadDailyWords();
-      currentRound = 0;
-      score = 0;
-      playerAnswers = [];
+      // No progress - show default welcome
+      const defaultMsg = document.createElement("p");
+      defaultMsg.textContent = "Welcome back!";
+      defaultMsg.style.color = "var(--muted)";
+      defaultMsg.style.textAlign = "center";
+      els.splash.appendChild(defaultMsg);
     }
+  })();
 
-    // Small delay so message is visible before ad
-    setTimeout(() => {
-      hideSection(els.splash);
-      els.startBtn.classList.add("hidden");
-      els.statsBtn.style.display = "none";
-      showSection(els.ad);
-      els.skipAdBtn.disabled = true;
-      setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
-    }, 800); // give message time to show
+  /* =========================
+     START FLOW
+  ========================== */
+  els.startBtn.addEventListener("click", async () => {
+    hideSection(els.splash);
+    els.startBtn.classList.add("hidden");
+    els.statsBtn.style.display = "none";
+    showSection(els.ad);
+    els.skipAdBtn.disabled = true;
+    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
   });
 
   els.skipAdBtn.addEventListener("click", () => {
