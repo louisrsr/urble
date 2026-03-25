@@ -1,16 +1,20 @@
 :root {
-  --bg: #1d2339;
-  --card-bg: rgba(29, 35, 57, 0.65);
-  --card-border: rgba(228, 245, 62, 0.25);
+  --bg: #0f172a;           /* dark blue background */
+  --card-bg: #1e2937;       /* lighter blue cards/boxes */
+  --card-border: #60a5fa;   /* light blue border accent */
   --text: #ffffff;
-  --muted: #d0d4e0;
-  --primary: #e4f53e;
+  --muted: #94a3b8;
+  --primary: #e4f53e;       /* your lime yellow */
+  --correct: #22c55e;
+  --wrong: #ef4444;
   --radius-lg: 28px;
   --radius-md: 20px;
-  --transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -51,7 +55,7 @@ header {
 }
 
 .game-started .title {
-  transform: scale(0.8) translateY(-8px);
+  transform: scale(0.82) translateY(-10px);
 }
 
 .game-started .title h1 {
@@ -60,7 +64,7 @@ header {
 
 .tagline {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--muted);
 }
 
@@ -74,7 +78,7 @@ header {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 button {
@@ -89,7 +93,9 @@ button {
   color: var(--text);
 }
 
-button:active { transform: scale(0.96); }
+button:active {
+  transform: scale(0.96);
+}
 
 .primary-btn {
   background: var(--primary);
@@ -103,8 +109,7 @@ button:active { transform: scale(0.96); }
   border: 1px solid var(--card-border);
 }
 
-.card,
-.modal {
+.card, .modal {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--card-border);
@@ -115,13 +120,14 @@ button:active { transform: scale(0.96); }
   transform: translateY(10px);
 }
 
-.card.visible,
-.modal:not(.hidden) {
+.card.visible, .modal:not(.hidden) {
   opacity: 1;
   transform: translateY(0);
 }
 
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 #progress-bar {
   height: 6px;
@@ -159,7 +165,7 @@ button:active { transform: scale(0.96); }
 }
 
 .options-grid button {
-  background: rgba(29, 35, 57, 0.7);
+  background: rgba(30, 41, 55, 0.8);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-md);
   padding: 16px;
@@ -172,7 +178,7 @@ button:active { transform: scale(0.96); }
 }
 
 .options-grid button:hover {
-  background: rgba(228, 245, 62, 0.12);
+  background: rgba(96, 165, 250, 0.15);
   border-color: var(--primary);
 }
 
@@ -193,9 +199,12 @@ button:active { transform: scale(0.96); }
   margin-bottom: 16px;
 }
 
-.modal-header h2 { margin: 0; font-family: 'Lora', serif; }
+.modal-header h2 {
+  margin: 0;
+  font-family: 'Lora', serif;
+}
 
-/* Contact button styling */
+/* Contact button */
 #contact-btn {
   font-family: 'Lora', serif;
   font-size: 1.1rem;
@@ -212,22 +221,35 @@ button:active { transform: scale(0.96); }
   color: var(--primary);
 }
 
-/* Stats button yellow like Play */
-.secondary-btn {
-  background: var(--primary);
-  color: #000;
-  font-weight: 700;
+/* Smooth modal animation */
+#stats-modal, #result {
+  animation: dropDown 0.4s ease forwards;
 }
 
-/* Mobile fit */
+@keyframes dropDown {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Play button bounce */
+.primary-btn {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Mobile adjustments */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
   .title h1 { font-size: 2.6rem; }
   .game-started .title h1 { font-size: 2.1rem; }
-}
-#result .primary-btn {
-  margin: 8px 6px;
-  display: inline-block;
-  width: auto;
-  min-width: 120px;
 }
