@@ -91,6 +91,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
+  /* Countdown for next day */
+  const getTimeUntilNextDay = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const diff = tomorrow - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  /* Immediate splash */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -99,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!</p>`;
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>Come back in ${getTimeUntilNextDay()} for 5 new words</p>`;
       showSection(els.result);
       els.resultText.textContent = "Game Complete!";
       els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
@@ -112,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
+  /* Start button */
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
 
@@ -198,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* Show Answers */
+  /* Show Answers - clean title */
   els.showAnswersBtn.addEventListener("click", () => {
     let html = `<h2 style="font-family:'Lora',serif;margin-bottom:20px;text-align:center;">Your Answers</h2>`;
 
@@ -247,7 +261,16 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
+  /* Close with reverse animation */
+  const closeModal = (modal) => {
+    modal.classList.add("closing");
+    setTimeout(() => {
+      hideSection(modal);
+      modal.classList.remove("closing");
+    }, 350);
+  };
+
+  els.closeStats.addEventListener("click", () => closeModal(els.statsModal));
 
   els.contactBtn?.addEventListener("click", () => window.location.href = "/contact.html");
 
