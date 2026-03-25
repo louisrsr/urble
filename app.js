@@ -1,7 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-     DOM ELEMENTS
-  ========================== */
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -32,9 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  /* =========================
-     UTILS
-  ========================== */
   const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
     gamesPlayed: 0,
     wins: 0,
@@ -64,22 +58,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const saveProgress = () => {
     if (gameWords.length === 0) return;
-    const progress = { gameWords, currentRound, score, playerAnswers, date: today };
-    localStorage.setItem("urbleCurrentGame", JSON.stringify(progress));
+    localStorage.setItem("urbleCurrentGame", JSON.stringify({
+      gameWords, currentRound, score, playerAnswers, date: today
+    }));
   };
 
   const loadProgress = () => {
     const saved = localStorage.getItem("urbleCurrentGame");
     if (!saved) return false;
-    const progress = JSON.parse(saved);
-    if (progress.date !== today) {
+    const p = JSON.parse(saved);
+    if (p.date !== today) {
       localStorage.removeItem("urbleCurrentGame");
       return false;
     }
-    gameWords = progress.gameWords || [];
-    currentRound = progress.currentRound || 0;
-    score = progress.score || 0;
-    playerAnswers = progress.playerAnswers || [];
+    gameWords = p.gameWords || [];
+    currentRound = p.currentRound || 0;
+    score = p.score || 0;
+    playerAnswers = p.playerAnswers || [];
     return true;
   };
 
@@ -88,11 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadDailyWords() {
     try {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      if (!res.ok) throw new Error();
       gameWords = await res.json();
-      if (!Array.isArray(gameWords) || gameWords.length !== TOTAL_ROUNDS) throw new Error("Invalid data");
-    } catch (err) {
-      console.error("Load failed:", err);
+    } catch (e) {
       gameWords = [
         { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
         { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
@@ -113,42 +106,29 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show message on splash immediately */
+  /* Immediate splash message */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      const msg = document.createElement("p");
-      msg.textContent = `You are on question ${currentRound + 1}/5 — let's finish this!`;
-      msg.style.color = "#e4f53e";
-      msg.style.fontWeight = "600";
-      msg.style.textAlign = "center";
-      msg.style.marginTop = "30px";
-      msg.style.fontSize = "1.1rem";
-      els.splash.appendChild(msg);
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:30px;font-size:1.1rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else {
-      const welcome = document.createElement("p");
-      welcome.textContent = "Welcome back!";
-      welcome.style.color = "var(--muted)";
-      welcome.style.textAlign = "center";
-      welcome.style.marginTop = "30px";
-      els.splash.appendChild(welcome);
+      els.splash.innerHTML = `<p style="color:var(--muted);text-align:center;margin-top:30px;">Welcome back!</p>`;
     }
   };
 
-  // Run on page load
   updateSplash();
 
-  /* START FLOW */
+  /* Start button */
   els.startBtn.addEventListener("click", async () => {
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
     showSection(els.ad);
     els.skipAdBtn.disabled = true;
-    setTimeout(() => (els.skipAdBtn.disabled = false), 2500);
+    setTimeout(() => els.skipAdBtn.disabled = false, 2500);
   });
 
   els.skipAdBtn.addEventListener("click", () => {
@@ -157,7 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
     startGame();
   });
 
-  /* GAME */
   const startGame = () => {
     document.body.classList.add("game-started");
     hideSection(els.result);
@@ -178,7 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const answers = shuffleSeed([data.correct, ...(data.wrong || [])], currentRound + Date.now() % 100);
     els.optionsContainer.innerHTML = "";
 
-    answers.forEach((answer) => {
+    answers.forEach(answer => {
       const btn = document.createElement("button");
       btn.textContent = cleanText(answer);
       btn.addEventListener("click", () => handleAnswer(btn, answer, data.correct));
@@ -191,8 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
     playerAnswers[currentRound] = selectedAnswer;
 
-    const buttons = els.optionsContainer.querySelectorAll("button");
-    buttons.forEach((btn) => {
+    els.optionsContainer.querySelectorAll("button").forEach(btn => {
       btn.disabled = true;
       if (btn.textContent === cleanText(correctAnswer)) btn.classList.add("option-correct");
       if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) btn.classList.add("option-wrong");
@@ -226,18 +204,17 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* Show Answers */
-  els.showAnswersBtn?.addEventListener("click", () => {
-    let html = `<h2 style="font-family: 'Lora', serif; margin-bottom: 20px; text-align:center;">Your Answers</h2>`;
+  els.showAnswersBtn.addEventListener("click", () => {
+    let html = `<h2 style="font-family:'Lora',serif;margin-bottom:20px;text-align:center;">Your Answers</h2>`;
 
     gameWords.forEach((data, i) => {
-      const userAnswer = playerAnswers[i] || "No answer";
+      const user = cleanText(playerAnswers[i] || "No answer");
       const correct = cleanText(data ? data.correct : "");
-      const user = cleanText(userAnswer);
-      const isCorrect = userAnswer === (data ? data.correct : "");
+      const isCorrect = playerAnswers[i] === (data ? data.correct : "");
 
       html += `
-        <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
-          <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px; font-weight:700;">
+        <div style="margin:16px 0;padding:16px;border:1px solid ${isCorrect?'#22c55e':'#ef4444'};border-radius:12px;background:rgba(29,35,57,0.6);">
+          <div style="font-family:'Lora',serif;font-size:1.4rem;margin-bottom:8px;font-weight:700;">
             ${cleanText(data ? data.word : "Unknown")}
           </div>
           <div><strong>Your answer:</strong> ${user}</div>
@@ -250,59 +227,45 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats Modal */
+  /* Stats */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
-    let scoreCounts = [0,0,0,0,0,0];
+    let counts = [0,0,0,0,0,0];
+    if (stats.scoreHistory) stats.scoreHistory.forEach(s => counts[s] = (counts[s]||0) + 1);
 
-    if (stats.scoreHistory) {
-      stats.scoreHistory.forEach(s => {
-        if (s >= 0 && s <= 5) scoreCounts[s]++;
-      });
-    }
-
-    let graphHTML = `<div style="display:flex; gap:8px; margin:20px 0; justify-content:center;">`;
+    let graph = `<div style="display:flex;gap:8px;justify-content:center;margin:20px 0;">`;
     for (let i = 0; i <= 5; i++) {
-      const count = scoreCounts[i];
       const color = i >= 4 ? '#22c55e' : i >= 3 ? '#eab308' : '#ef4444';
-      graphHTML += `
+      graph += `
         <div style="text-align:center;">
-          <div style="background:${color}; width:32px; height:${Math.max(30, count * 12)}px; border-radius:6px; margin:0 auto;"></div>
-          <div style="font-size:0.85rem; margin-top:6px;">${i}/5</div>
-          <div style="font-size:0.8rem; color:var(--muted);">${count}</div>
-        </div>
-      `;
+          <div style="background:${color};width:32px;height:${Math.max(30, (counts[i]||0)*12)}px;border-radius:6px;margin:0 auto;"></div>
+          <div style="font-size:0.85rem;margin-top:6px;">${i}/5</div>
+          <div style="font-size:0.8rem;color:var(--muted);">${counts[i]||0}</div>
+        </div>`;
     }
-    graphHTML += `</div>`;
+    graph += `</div>`;
 
     els.statsContent.innerHTML = `
       <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
-      <p><strong>Wins (3+):</strong> ${stats.wins || 0}</p>
-      <p><strong>Overall Accuracy:</strong> ${stats.scoreHistory ? Math.round((stats.scoreHistory.reduce((a,b)=>a+b,0) / (stats.scoreHistory.length * 5)) * 100) : 0}%</p>
-      <h3 style="margin:20px 0 10px; text-align:center;">Score Distribution</h3>
-      ${graphHTML}
+      <p><strong>Wins (3+):</strong> ${stats.wins||0}</p>
+      <p><strong>Overall Accuracy:</strong> ${stats.scoreHistory ? Math.round((stats.scoreHistory.reduce((a,b)=>a+b,0)/(stats.scoreHistory.length*5))*100) : 0}%</p>
+      <h3 style="margin:20px 0 10px;text-align:center;">Score Distribution</h3>
+      ${graph}
     `;
     showSection(els.statsModal);
   });
 
   els.closeStats.addEventListener("click", () => hideSection(els.statsModal));
 
-  /* Contact */
-  els.contactBtn?.addEventListener("click", () => {
-    window.location.href = "/contact.html";
-  });
+  els.contactBtn?.addEventListener("click", () => window.location.href = "/contact.html");
 
-  /* Share */
   els.shareBtn?.addEventListener("click", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
-    gameWords.forEach((_, i) => {
-      grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥";
-    });
+    gameWords.forEach((_, i) => grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥");
     grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
+    navigator.clipboard.writeText(grid).then(() => alert("Copied!")).catch(() => prompt("Copy:\n\n" + grid));
   });
 
-  /* Clickable title */
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
