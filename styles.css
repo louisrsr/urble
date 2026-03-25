@@ -1,12 +1,12 @@
 :root {
-  --bg: #0f172a;           /* darker blue background */
-  --card-bg: #1e2937;       /* lighter blue rounded boxes */
+  --bg: #0f172a;
+  --card-bg: #1e2937;
   --text: #ffffff;
   --muted: #94a3b8;
-  --primary: #e4f53e;       /* lime yellow */
+  --primary: #e4f53e;
   --correct: #22c55e;
   --wrong: #ef4444;
-  --radius-lg: 16px;        /* smaller radius */
+  --radius-lg: 16px;
   --radius-md: 12px;
   --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -112,7 +112,7 @@ button:active {
   transition: var(--transition);
   opacity: 0;
   transform: translateY(20px);
-  border: none;           /* removed outline */
+  border: none;
 }
 
 .card.visible, .modal:not(.hidden) {
@@ -187,7 +187,7 @@ button:active {
   background: rgba(239,68,68,0.18) !important;
 }
 
-/* Smooth drop-down animation */
+/* Smooth drop-down when opening */
 #stats-modal, #result {
   animation: dropDown 0.4s ease forwards;
 }
@@ -203,9 +203,9 @@ button:active {
   }
 }
 
-/* Reverse animation when closing */
+/* FIXED reverse animation when closing - no flash */
 #stats-modal.closing, #result.closing {
-  animation: dropUp 0.35s ease forwards;
+  animation: dropUp 0.35s ease forwards !important;
 }
 
 @keyframes dropUp {
@@ -248,7 +248,16 @@ button:active {
   color: var(--primary);
 }
 
-/* Mobile adjustments */
+/* Countdown timer styling */
+#countdown {
+  font-size: 1rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+/* Mobile */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
   .title h1 { font-size: 2.6rem; }
