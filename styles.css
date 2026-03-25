@@ -1,12 +1,12 @@
 :root {
-  --bg: #0f172a;
-  --card-bg: #1e2937;
+  --bg: #0f172a;           /* darker blue background */
+  --card-bg: #1e2937;       /* lighter blue rounded boxes */
   --text: #ffffff;
   --muted: #94a3b8;
-  --primary: #e4f53e;
+  --primary: #e4f53e;       /* lime yellow */
   --correct: #22c55e;
   --wrong: #ef4444;
-  --radius-lg: 16px;     /* smaller radius */
+  --radius-lg: 16px;        /* smaller radius */
   --radius-md: 12px;
   --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -96,6 +96,7 @@ button:active {
   background: var(--primary);
   color: #000;
   font-weight: 700;
+  animation: bounce 2s infinite;
 }
 
 .secondary-btn {
@@ -186,7 +187,7 @@ button:active {
   background: rgba(239,68,68,0.18) !important;
 }
 
-/* Smooth modal animations */
+/* Smooth drop-down animation */
 #stats-modal, #result {
   animation: dropDown 0.4s ease forwards;
 }
@@ -204,7 +205,7 @@ button:active {
 
 /* Reverse animation when closing */
 #stats-modal.closing, #result.closing {
-  animation: dropUp 0.3s ease forwards;
+  animation: dropUp 0.35s ease forwards;
 }
 
 @keyframes dropUp {
@@ -247,17 +248,7 @@ button:active {
   color: var(--primary);
 }
 
-/* Play button bounce */
-.primary-btn {
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
-/* Mobile */
+/* Mobile adjustments */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
   .title h1 { font-size: 2.6rem; }
