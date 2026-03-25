@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const TOTAL_ROUNDS = 5;
 
   /* =========================
-     STATS + PROGRESS
+     UTILS
   ========================== */
   const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
     gamesPlayed: 0,
@@ -76,9 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem("urbleCurrentGame");
       return false;
     }
-    gameWords = progress.gameWords;
-    currentRound = progress.currentRound;
-    score = progress.score;
+    gameWords = progress.gameWords || [];
+    currentRound = progress.currentRound || 0;
+    score = progress.score || 0;
     playerAnswers = progress.playerAnswers || [];
     return true;
   };
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Run immediately
+  // Run on page load
   updateSplash();
 
   /* START FLOW */
@@ -167,6 +167,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const nextRound = () => {
     if (currentRound >= TOTAL_ROUNDS) {
+      endGame();
+      return;
+    }
+
+    if (!gameWords[currentRound]) {
+      console.error("gameWords is empty or invalid");
       endGame();
       return;
     }
