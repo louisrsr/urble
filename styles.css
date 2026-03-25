@@ -1,15 +1,14 @@
 :root {
-  --bg: #0f172a;           /* dark blue background */
-  --card-bg: #1e2937;       /* lighter blue cards/boxes */
-  --card-border: #60a5fa;   /* light blue border accent */
+  --bg: #0f172a;
+  --card-bg: #1e2937;
   --text: #ffffff;
   --muted: #94a3b8;
-  --primary: #e4f53e;       /* your lime yellow */
+  --primary: #e4f53e;
   --correct: #22c55e;
   --wrong: #ef4444;
-  --radius-lg: 28px;
-  --radius-md: 20px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius-lg: 16px;     /* smaller radius */
+  --radius-md: 12px;
+  --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -62,17 +61,13 @@ header {
   font-size: 2.4rem;
 }
 
-.tagline {
+.tagline, .tagline-sub {
   margin: 0;
-  font-size: 1.05rem;
   color: var(--muted);
 }
 
-.tagline-sub {
-  margin: 4px 0 0;
-  font-size: 0.95rem;
-  color: var(--muted);
-}
+.tagline { font-size: 1.05rem; }
+.tagline-sub { font-size: 0.95rem; margin-top: 4px; }
 
 .header-buttons {
   display: flex;
@@ -106,18 +101,17 @@ button:active {
 .secondary-btn {
   background: var(--card-bg);
   color: var(--text);
-  border: 1px solid var(--card-border);
 }
 
 .card, .modal {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--card-border);
   padding: 20px;
   margin-bottom: 16px;
   transition: var(--transition);
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(20px);
+  border: none;           /* removed outline */
 }
 
 .card.visible, .modal:not(.hidden) {
@@ -165,8 +159,8 @@ button:active {
 }
 
 .options-grid button {
-  background: rgba(30, 41, 55, 0.8);
-  border: 2px solid var(--card-border);
+  background: rgba(30, 41, 55, 0.9);
+  border: 2px solid #334155;
   border-radius: var(--radius-md);
   padding: 16px;
   min-height: 90px;
@@ -190,6 +184,38 @@ button:active {
 .option-wrong {
   border-color: var(--wrong) !important;
   background: rgba(239,68,68,0.18) !important;
+}
+
+/* Smooth modal animations */
+#stats-modal, #result {
+  animation: dropDown 0.4s ease forwards;
+}
+
+@keyframes dropDown {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Reverse animation when closing */
+#stats-modal.closing, #result.closing {
+  animation: dropUp 0.3s ease forwards;
+}
+
+@keyframes dropUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
 }
 
 .modal-header {
@@ -221,22 +247,6 @@ button:active {
   color: var(--primary);
 }
 
-/* Smooth modal animation */
-#stats-modal, #result {
-  animation: dropDown 0.4s ease forwards;
-}
-
-@keyframes dropDown {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Play button bounce */
 .primary-btn {
   animation: bounce 2s infinite;
@@ -244,10 +254,10 @@ button:active {
 
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  50% { transform: translateY(-3px); }
 }
 
-/* Mobile adjustments */
+/* Mobile */
 @media (max-width: 500px) {
   #app { padding: 16px 12px 48px; }
   .title h1 { font-size: 2.6rem; }
