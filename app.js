@@ -2,8 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
-    ad: document.getElementById("ad"),
-    skipAdBtn: document.getElementById("skip-ad"),
     round: document.getElementById("round"),
     result: document.getElementById("result"),
     statsBtn: document.getElementById("stats-btn"),
@@ -93,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Show message on splash immediately */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -115,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  /* Start button */
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
 
@@ -244,7 +240,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     els.statsContent.innerHTML = `
       <p><strong>Games Played:</strong> ${stats.gamesPlayed}</p>
-      <p><strong>Wins (3+):</strong> ${stats.wins||0}</p>
       <p><strong>Overall Accuracy:</strong> ${stats.scoreHistory ? Math.round((stats.scoreHistory.reduce((a,b)=>a+b,0)/(stats.scoreHistory.length*5))*100) : 0}%</p>
       <h3 style="margin:20px 0 10px;text-align:center;">Score Distribution</h3>
       ${graph}
