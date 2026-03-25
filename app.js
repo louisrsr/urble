@@ -90,7 +90,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       gameWords = await res.json();
-      if (gameWords.length !== TOTAL_ROUNDS) throw new Error("Incomplete data");
+      if (!Array.isArray(gameWords) || gameWords.length !== TOTAL_ROUNDS) {
+        throw new Error("Invalid data");
+      }
     } catch (err) {
       console.error("Load failed:", err);
       gameWords = [
@@ -143,6 +145,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* START FLOW */
   els.startBtn.addEventListener("click", async () => {
+    // Ensure words are loaded
+    if (gameWords.length === 0) {
+      await loadDailyWords();
+    }
+
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
@@ -166,22 +173,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const nextRound = () => {
-    if (currentRound >= TOTAL_ROUNDS) {
-      endGame();
-      return;
-    }
-
-    if (!gameWords[currentRound]) {
-      console.error("gameWords is empty or invalid");
+    if (currentRound >= TOTAL_ROUNDS || !gameWords[currentRound]) {
       endGame();
       return;
     }
 
     const data = gameWords[currentRound];
-    els.wordTitle.textContent = cleanText(data.word);
+    els.wordTitle.textContent = cleanText(data.word || "Unknown");
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ...data.wrong], currentRound + Date.now() % 100);
+    const answers = shuffleSeed([data.correct, ... (data.wrong || [])], currentRound + Date.now() % 100);
     els.optionsContainer.innerHTML = "";
 
     answers.forEach((answer) => {
@@ -237,14 +238,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gameWords.forEach((data, i) => {
       const userAnswer = playerAnswers[i] || "No answer";
-      const correct = cleanText(data.correct);
+      const correct = cleanText(data ? data.correct : "");
       const user = cleanText(userAnswer);
-      const isCorrect = userAnswer === data.correct;
+      const isCorrect = userAnswer === (data ? data.correct : "");
 
       html += `
         <div style="margin:16px 0; padding:16px; border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'}; border-radius:12px; background:rgba(29,35,57,0.6);">
           <div style="font-family: 'Lora', serif; font-size:1.4rem; margin-bottom:8px; font-weight:700;">
-            ${cleanText(data.word)}
+            ${cleanText(data ? data.word : "Unknown")}
           </div>
           <div><strong>Your answer:</strong> ${user}</div>
           <div><strong>Correct:</strong> ${correct}</div>
