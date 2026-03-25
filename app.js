@@ -29,35 +29,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
-    gamesPlayed: 0,
-    wins: 0,
-    currentStreak: 0,
-    maxStreak: 0,
-    lastPlayed: null,
-    scoreHistory: []
-  };
+  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || { gamesPlayed: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastPlayed: null, scoreHistory: [] };
+  const saveStats = (s) => localStorage.setItem("urbleStats", JSON.stringify(s));
 
-  const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
-
-  const shuffleSeed = (array, seed) => {
-    const result = array.slice();
+  const shuffleSeed = (arr, seed) => {
+    const a = arr.slice();
     let s = seed;
-    for (let i = result.length - 1; i > 0; i--) {
+    for (let i = a.length - 1; i > 0; i--) {
       s = (s * 9301 + 49297) % 233280;
       const j = Math.floor((s / 233280) * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    return result;
+    return a;
   };
 
-  const cleanText = (text) => text ? text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim() : "";
+  const cleanText = (t) => t ? t.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim() : "";
 
-  const saveProgress = () => {
-    if (!gameWords.length) return;
-    localStorage.setItem("urbleCurrentGame", JSON.stringify({ gameWords, currentRound, score, playerAnswers, date: today }));
-  };
-
+  const saveProgress = () => localStorage.setItem("urbleCurrentGame", JSON.stringify({ gameWords, currentRound, score, playerAnswers, date: today }));
   const loadProgress = () => {
     const saved = localStorage.getItem("urbleCurrentGame");
     if (!saved) return false;
@@ -72,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     playerAnswers = p.playerAnswers || [];
     return true;
   };
-
   const clearProgress = () => localStorage.removeItem("urbleCurrentGame");
 
   async function loadDailyWords() {
@@ -93,11 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Immediate splash */
+  /* Immediate splash message */
   const updateSplash = () => {
     els.splash.innerHTML = "";
     const hasProgress = loadProgress();
-
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else {
@@ -107,7 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  /* Start button */
   els.startBtn.addEventListener("click", async () => {
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
@@ -135,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
       endGame();
       return;
     }
-
     const data = gameWords[currentRound];
     els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
@@ -153,16 +137,16 @@ document.addEventListener("DOMContentLoaded", () => {
     saveProgress();
   };
 
-  const handleAnswer = (btn, selected, correct) => {
-    playerAnswers[currentRound] = selected;
+  const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
+    playerAnswers[currentRound] = selectedAnswer;
 
-    els.optionsContainer.querySelectorAll("button").forEach(b => {
-      b.disabled = true;
-      if (b.textContent === cleanText(correct)) b.classList.add("option-correct");
-      if (b.textContent === cleanText(selected) && selected !== correct) b.classList.add("option-wrong");
+    els.optionsContainer.querySelectorAll("button").forEach(btn => {
+      btn.disabled = true;
+      if (btn.textContent === cleanText(correctAnswer)) btn.classList.add("option-correct");
+      if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) btn.classList.add("option-wrong");
     });
 
-    if (selected === correct) score++;
+    if (selectedAnswer === correctAnswer) score++;
 
     currentRound++;
     setTimeout(nextRound, 1400);
