@@ -2,8 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
-    ad: document.getElementById("ad"),
-    skipAdBtn: document.getElementById("skip-ad"),
     round: document.getElementById("round"),
     result: document.getElementById("result"),
     statsBtn: document.getElementById("stats-btn"),
@@ -93,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Immediate splash */
+  /* Update splash immediately */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -103,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!</p>`;
-      // Show result directly
       showSection(els.result);
       els.resultText.textContent = "Game Complete!";
       els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
@@ -134,14 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
-    showSection(els.ad);
-    els.skipAdBtn.disabled = true;
-    setTimeout(() => els.skipAdBtn.disabled = false, 2500);
-  });
-
-  els.skipAdBtn.addEventListener("click", () => {
-    hideSection(els.ad);
-    showSection(els.progressBar);
+    await loadDailyWords();
     startGame();
   });
 
