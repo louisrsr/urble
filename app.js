@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
+    ad: document.getElementById("ad"),
+    skipAdBtn: document.getElementById("skip-ad"),
     round: document.getElementById("round"),
     result: document.getElementById("result"),
     statsBtn: document.getElementById("stats-btn"),
@@ -91,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Update splash immediately */
+  /* Show message on splash immediately */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -118,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound >= TOTAL_ROUNDS) {
-      // Already finished - go straight to result
       hideSection(els.splash);
       els.startBtn.classList.add("hidden");
       els.statsBtn.style.display = "block";
