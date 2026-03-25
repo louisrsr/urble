@@ -90,9 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       gameWords = await res.json();
-      if (!Array.isArray(gameWords) || gameWords.length !== TOTAL_ROUNDS) {
-        throw new Error("Invalid data");
-      }
+      if (!Array.isArray(gameWords) || gameWords.length !== TOTAL_ROUNDS) throw new Error("Invalid data");
     } catch (err) {
       console.error("Load failed:", err);
       gameWords = [
@@ -115,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => section.classList.add("hidden"), 300);
   };
 
-  /* Show message immediately on page load */
+  /* Show message on splash immediately */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -145,11 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* START FLOW */
   els.startBtn.addEventListener("click", async () => {
-    // Ensure words are loaded
-    if (gameWords.length === 0) {
-      await loadDailyWords();
-    }
-
     hideSection(els.splash);
     els.startBtn.classList.add("hidden");
     els.statsBtn.style.display = "none";
@@ -179,10 +172,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const data = gameWords[currentRound];
-    els.wordTitle.textContent = cleanText(data.word || "Unknown");
+    els.wordTitle.textContent = cleanText(data.word);
     els.progressFill.style.width = `${((currentRound + 1) / TOTAL_ROUNDS) * 100}%`;
 
-    const answers = shuffleSeed([data.correct, ... (data.wrong || [])], currentRound + Date.now() % 100);
+    const answers = shuffleSeed([data.correct, ...(data.wrong || [])], currentRound + Date.now() % 100);
     els.optionsContainer.innerHTML = "";
 
     answers.forEach((answer) => {
