@@ -51,16 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return result;
   };
 
-  const cleanText = (text) => {
-    if (!text) return "";
-    return text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim();
-  };
+  const cleanText = (text) => text ? text.replace(/\[([^\]]+)\]/g, "$1").replace(/\([nv]\.\)/gi, "").replace(/\s+/g, " ").trim() : "";
 
   const saveProgress = () => {
-    if (gameWords.length === 0) return;
-    localStorage.setItem("urbleCurrentGame", JSON.stringify({
-      gameWords, currentRound, score, playerAnswers, date: today
-    }));
+    if (!gameWords.length) return;
+    localStorage.setItem("urbleCurrentGame", JSON.stringify({ gameWords, currentRound, score, playerAnswers, date: today }));
   };
 
   const loadProgress = () => {
@@ -83,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadDailyWords() {
     try {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
-      if (!res.ok) throw new Error();
       gameWords = await res.json();
     } catch (e) {
       gameWords = [
@@ -96,26 +90,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const showSection = (section) => {
-    section.classList.remove("hidden");
-    setTimeout(() => section.classList.add("visible"), 20);
-  };
+  const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
+  const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  const hideSection = (section) => {
-    section.classList.remove("visible");
-    setTimeout(() => section.classList.add("hidden"), 300);
-  };
-
-  /* Immediate splash message */
+  /* Immediate splash */
   const updateSplash = () => {
     els.splash.innerHTML = "";
-
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:30px;font-size:1.1rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else {
-      els.splash.innerHTML = `<p style="color:var(--muted);text-align:center;margin-top:30px;">Welcome back!</p>`;
+      els.splash.innerHTML = `<p style="color:var(--muted);text-align:center;margin-top:40px;">Welcome back!</p>`;
     }
   };
 
@@ -167,16 +153,16 @@ document.addEventListener("DOMContentLoaded", () => {
     saveProgress();
   };
 
-  const handleAnswer = (clickedBtn, selectedAnswer, correctAnswer) => {
-    playerAnswers[currentRound] = selectedAnswer;
+  const handleAnswer = (btn, selected, correct) => {
+    playerAnswers[currentRound] = selected;
 
-    els.optionsContainer.querySelectorAll("button").forEach(btn => {
-      btn.disabled = true;
-      if (btn.textContent === cleanText(correctAnswer)) btn.classList.add("option-correct");
-      if (btn.textContent === cleanText(selectedAnswer) && selectedAnswer !== correctAnswer) btn.classList.add("option-wrong");
+    els.optionsContainer.querySelectorAll("button").forEach(b => {
+      b.disabled = true;
+      if (b.textContent === cleanText(correct)) b.classList.add("option-correct");
+      if (b.textContent === cleanText(selected) && selected !== correct) b.classList.add("option-wrong");
     });
 
-    if (selectedAnswer === correctAnswer) score++;
+    if (selected === correct) score++;
 
     currentRound++;
     setTimeout(nextRound, 1400);
@@ -213,10 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const isCorrect = playerAnswers[i] === (data ? data.correct : "");
 
       html += `
-        <div style="margin:16px 0;padding:16px;border:1px solid ${isCorrect?'#22c55e':'#ef4444'};border-radius:12px;background:rgba(29,35,57,0.6);">
-          <div style="font-family:'Lora',serif;font-size:1.4rem;margin-bottom:8px;font-weight:700;">
-            ${cleanText(data ? data.word : "Unknown")}
-          </div>
+        <div style="margin:16px 0;padding:16px;border:1px solid ${isCorrect ? '#22c55e' : '#ef4444'};border-radius:12px;background:rgba(29,35,57,0.6);">
+          <div style="font-family:'Lora',serif;font-size:1.4rem;margin-bottom:8px;font-weight:700;">${cleanText(data ? data.word : "Unknown")}</div>
           <div><strong>Your answer:</strong> ${user}</div>
           <div><strong>Correct:</strong> ${correct}</div>
         </div>
@@ -263,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
     gameWords.forEach((_, i) => grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥");
     grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied!")).catch(() => prompt("Copy:\n\n" + grid));
+    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
   els.titleClickable?.addEventListener("click", () => {
