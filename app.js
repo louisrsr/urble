@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Show correct message on load */
+  /* Immediate splash message */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -103,7 +103,12 @@ document.addEventListener("DOMContentLoaded", () => {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
       // Game is already complete
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete! Tap Stats or Share below.</p>`;
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!</p>`;
+      showSection(els.result);
+      els.resultText.textContent = "Game Complete!";
+      els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
+      els.statsBtn.style.display = "block";
+      return;
     } else {
       els.splash.innerHTML = `<p style="color:var(--muted);text-align:center;margin-top:40px;">Welcome back!</p>`;
     }
