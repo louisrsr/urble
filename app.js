@@ -27,15 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toDateString();
   const TOTAL_ROUNDS = 5;
 
-  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || {
-    gamesPlayed: 0,
-    wins: 0,
-    currentStreak: 0,
-    maxStreak: 0,
-    lastPlayed: null,
-    scoreHistory: []
-  };
-
+  const getStats = () => JSON.parse(localStorage.getItem("urbleStats")) || { gamesPlayed: 0, wins: 0, currentStreak: 0, maxStreak: 0, lastPlayed: null, scoreHistory: [] };
   const saveStats = (stats) => localStorage.setItem("urbleStats", JSON.stringify(stats));
 
   const shuffleSeed = (array, seed) => {
@@ -78,29 +70,36 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
       gameWords = await res.json();
     } catch (e) {
-      gameWords = [
-        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
-        { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
-        { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] },
-        { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
-        { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
-      ];
+      gameWords = [{ word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] }, { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] }, { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] }, { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] }, { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }];
     }
   }
 
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
   const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
 
-  /* Smooth close with reverse animation */
   const closeModal = (modal) => {
     modal.classList.add("closing");
     setTimeout(() => {
       hideSection(modal);
       modal.classList.remove("closing");
-    }, 350);
+      modal.style.animation = ''; // clean up
+    }, 380);
   };
 
-  /* Immediate splash */
+  /* Get time until next day with seconds */
+  const getTimeUntilNextDay = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const diff = tomorrow - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  /* Update splash and result with timer */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
@@ -109,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
       els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!</p>`;
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>Come back in <span id="splash-countdown">${getTimeUntilNextDay()}</span> for 5 new words</p>`;
       showSection(els.result);
       els.resultText.textContent = "Game Complete!";
       els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
@@ -122,10 +121,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  /* Start button */
+  /* Live countdown update every second */
+  setInterval(() => {
+    const countdownEls = document.querySelectorAll("#countdown, #splash-countdown");
+    countdownEls.forEach(el => {
+      if (el) el.textContent = getTimeUntilNextDay();
+    });
+  }, 1000);
+
   els.startBtn.addEventListener("click", async () => {
     const hasProgress = loadProgress();
-
     if (hasProgress && currentRound >= TOTAL_ROUNDS) {
       hideSection(els.splash);
       els.startBtn.classList.add("hidden");
@@ -194,6 +199,13 @@ document.addEventListener("DOMContentLoaded", () => {
     els.progressFill.style.width = "100%";
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
+
+    // Timer on result screen
+    const timerDiv = document.createElement("div");
+    timerDiv.id = "countdown";
+    timerDiv.innerHTML = `Come back in <span id="result-countdown">${getTimeUntilNextDay()}</span> for 5 new words`;
+    els.scoreText.parentNode.appendChild(timerDiv);
+
     els.statsBtn.style.display = "block";
     clearProgress();
     updateStats();
@@ -209,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* Show Answers - clean title only */
+  /* Show Answers - only "Your Answers" */
   els.showAnswersBtn.addEventListener("click", () => {
     let html = `<h2 style="font-family:'Lora',serif;margin-bottom:20px;text-align:center;">Your Answers</h2>`;
 
@@ -231,7 +243,6 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Stats */
   els.statsBtn.addEventListener("click", () => {
     const stats = getStats();
     let counts = [0,0,0,0,0,0];
@@ -240,12 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let graph = `<div style="display:flex;gap:8px;justify-content:center;margin:20px 0;">`;
     for (let i = 0; i <= 5; i++) {
       const color = i >= 4 ? '#22c55e' : i >= 3 ? '#eab308' : '#ef4444';
-      graph += `
-        <div style="text-align:center;">
-          <div style="background:${color};width:32px;height:${Math.max(30, (counts[i]||0)*12)}px;border-radius:6px;margin:0 auto;"></div>
-          <div style="font-size:0.85rem;margin-top:6px;">${i}/5</div>
-          <div style="font-size:0.8rem;color:var(--muted);">${counts[i]||0}</div>
-        </div>`;
+      graph += `<div style="text-align:center;"><div style="background:${color};width:32px;height:${Math.max(30, (counts[i]||0)*12)}px;border-radius:6px;margin:0 auto;"></div><div style="font-size:0.85rem;margin-top:6px;">${i}/5</div><div style="font-size:0.8rem;color:var(--muted);">${counts[i]||0}</div></div>`;
     }
     graph += `</div>`;
 
@@ -258,45 +264,37 @@ document.addEventListener("DOMContentLoaded", () => {
     showSection(els.statsModal);
   });
 
-  /* Close with reverse animation */
-  els.closeStats.addEventListener("click", () => {
-    els.statsModal.classList.add("closing");
-    setTimeout(() => {
-      hideSection(els.statsModal);
-      els.statsModal.classList.remove("closing");
-    }, 350);
-  });
+  els.closeStats.addEventListener("click", () => closeModal(els.statsModal));
 
-  /* Contact */
   els.contactBtn?.addEventListener("click", () => window.location.href = "/contact.html");
 
-  /* Share */
   els.shareBtn?.addEventListener("click", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
     gameWords.forEach((_, i) => grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥");
     grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
+    navigator.clipboard.writeText(grid).then(() => alert("Copied!")).catch(() => prompt("Copy:\n\n" + grid));
   });
 
-  /* Clickable title */
+  /* URBLE title letter animation */
+  if (els.titleClickable) {
+    const h1 = els.titleClickable.querySelector("h1");
+    if (h1) {
+      h1.innerHTML = h1.textContent.split('').map(letter => `<span>${letter}</span>`).join('');
+    }
+    els.titleClickable.style.cursor = "pointer";
+    els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
+    els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
+  }
+
   els.titleClickable?.addEventListener("click", () => {
     document.body.classList.remove("game-started");
     hideSection(els.round);
     hideSection(els.result);
-    hideSection(els.ad);
-    hideSection(els.progressBar);
     showSection(els.splash);
     els.startBtn.classList.remove("hidden");
     els.statsBtn.style.display = "block";
     updateSplash();
   });
-
-  if (els.titleClickable) {
-    const h1 = els.titleClickable.querySelector("h1");
-    els.titleClickable.style.cursor = "pointer";
-    els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
-    els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
-  }
 
   window.addEventListener("beforeunload", saveProgress);
 });
