@@ -126,9 +126,9 @@ button:active {
   display: none !important;
 }
 
-/* FIXED: Better closing animation - no flash */
+/* FIXED closing animation - no flash */
 #stats-modal.closing, #result.closing {
-  animation: dropUp 0.4s ease forwards !important;
+  animation: dropUp 0.42s ease forwards !important;
   pointer-events: none;
 }
 
@@ -239,16 +239,16 @@ button:active {
   color: var(--primary);
 }
 
-/* Countdown timer */
+/* Countdown timer - forced white */
 #countdown, #splash-countdown, #result-countdown {
   font-size: 1rem;
-  color: var(--muted);
+  color: #ffffff !important;
   text-align: center;
   margin-top: 12px;
   font-weight: 500;
 }
 
-/* Resume message - white text */
+/* Resume message - white */
 .resume-msg {
   color: #ffffff !important;
   font-weight: 600;
