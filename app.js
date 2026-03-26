@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
+
+  // Copyright console message
+  console.log("%cURBLE © 2026. All Rights Reserved.\nUnauthorized copying, modification, or redistribution of this game is strictly prohibited and may result in legal action.", 
+    "color:#e4f53e; font-size:13px; font-family:monospace; font-weight:600");
+
   const els = {
     startBtn: document.getElementById("start-btn"),
     splash: document.getElementById("splash"),
@@ -124,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  // Live countdown update
+  // Live countdown
   setInterval(() => {
     document.querySelectorAll("#splash-countdown, #result-countdown, #countdown").forEach(el => {
       if (el) el.textContent = getTimeUntilNextDay();
@@ -202,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
 
-    // Timer on result screen - white text
+    // Timer on result screen with white text
     const timerHTML = `<div id="countdown" style="color:#ffffff !important;">New words in <span id="result-countdown">${getTimeUntilNextDay()}</span></div>`;
     els.scoreText.insertAdjacentHTML('afterend', timerHTML);
 
