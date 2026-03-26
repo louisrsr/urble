@@ -126,6 +126,23 @@ button:active {
   display: none !important;
 }
 
+/* FIXED: Better closing animation - no flash */
+#stats-modal.closing, #result.closing {
+  animation: dropUp 0.4s ease forwards !important;
+  pointer-events: none;
+}
+
+@keyframes dropUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(40px) scale(0.92);
+  }
+}
+
 #progress-bar {
   height: 6px;
   background: rgba(255,255,255,0.08);
@@ -189,39 +206,7 @@ button:active {
   background: rgba(239,68,68,0.18) !important;
 }
 
-/* Opening animation */
-#stats-modal, #result {
-  animation: dropDown 0.4s ease forwards;
-}
-
-@keyframes dropDown {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* FIXED closing - no flash, clean fade out */
-#stats-modal.closing, #result.closing {
-  animation: dropUp 0.35s ease forwards !important;
-}
-
-@keyframes dropUp {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-}
-
-/* URBLE title letter-by-letter lime animation on hover */
+/* URBLE title letter animation */
 .title h1 span {
   display: inline-block;
   transition: color 0.15s ease;
@@ -235,18 +220,6 @@ button:active {
   0%   { color: var(--text); }
   50%  { color: var(--primary); }
   100% { color: var(--text); }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-family: 'Lora', serif;
 }
 
 /* Contact button */
@@ -267,12 +240,21 @@ button:active {
 }
 
 /* Countdown timer */
-#countdown {
+#countdown, #splash-countdown, #result-countdown {
   font-size: 1rem;
   color: var(--muted);
   text-align: center;
   margin-top: 12px;
   font-weight: 500;
+}
+
+/* Resume message - white text */
+.resume-msg {
+  color: #ffffff !important;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 1.15rem;
 }
 
 /* Mobile */
