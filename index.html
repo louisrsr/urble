@@ -1,13 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>URBLE — Guess the Urban Dictionary definition!</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1a2338" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>URBLE - Daily Urban Dictionary Game • Guess the Slang</title>
+  <meta name="description" content="Play URBLE, the daily Urban Dictionary guessing game. Guess real slang definitions in 5 rounds. New words every day.">
+  <meta name="robots" content="noarchive">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -29,10 +27,12 @@
         <div id="progress-fill"></div>
       </div>
 
-      <section id="splash" class="card visible">
-        <!-- Message added by JS -->
+      <!-- Splash Screen -->
+      <section id="splash" class="card">
+        <!-- Dynamic content added by JS -->
       </section>
 
+      <!-- Game Round -->
       <section id="round" class="card hidden">
         <div class="round-header">
           <h2 id="word-title"></h2>
@@ -40,14 +40,19 @@
         <div id="options" class="options-grid"></div>
       </section>
 
+      <!-- Result Screen -->
       <section id="result" class="card hidden">
         <h2 id="result-text"></h2>
         <p id="score-text"></p>
-        <button id="show-answers" class="primary-btn">Show Answers</button>
-        <button id="share-btn" class="primary-btn">Share Result</button>
+        <!-- Timer will be added here by JS -->
+        <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: center;">
+          <button id="show-answers" class="secondary-btn">Show Answers</button>
+          <button id="share-btn" class="secondary-btn">Share</button>
+        </div>
       </section>
 
-      <section id="stats-modal" class="card modal hidden">
+      <!-- Stats Modal -->
+      <section id="stats-modal" class="modal hidden">
         <div class="modal-header">
           <h2>Your Stats</h2>
           <button id="close-stats">Close</button>
@@ -56,8 +61,11 @@
       </section>
     </main>
 
-    <footer>
-      <button id="contact-btn">Contact</button>
+    <!-- Copyright Footer -->
+    <footer style="text-align:center; margin-top: auto; padding: 30px 10px 20px; color:#64748b; font-size: 0.85rem; line-height: 1.5;">
+      © 2026 URBLE. All rights reserved.<br>
+      This game, its design, code, and content are protected by copyright law.<br>
+      Unauthorized copying, modification, or redistribution is strictly prohibited.
     </footer>
   </div>
 
