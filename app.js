@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       hideSection(modal);
       modal.classList.remove("closing");
-    }, 420); // slightly longer delay to prevent flash
+    }, 450);
   };
 
   const getTimeUntilNextDay = () => {
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
       els.splash.innerHTML = `<p class="resume-msg">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>New words in <span id="splash-countdown">${getTimeUntilNextDay()}</span></p>`;
+      els.splash.innerHTML = `<p style="color:#ffffff;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>New words in <span id="splash-countdown">${getTimeUntilNextDay()}</span></p>`;
       showSection(els.result);
       els.resultText.textContent = "Game Complete!";
       els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  // Live countdown
+  // Live countdown update
   setInterval(() => {
     document.querySelectorAll("#splash-countdown, #result-countdown, #countdown").forEach(el => {
       if (el) el.textContent = getTimeUntilNextDay();
@@ -202,8 +202,8 @@ document.addEventListener("DOMContentLoaded", () => {
     els.resultText.textContent = "Game Complete!";
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
 
-    // Timer on result screen
-    const timerHTML = `<div id="countdown">New words in <span id="result-countdown">${getTimeUntilNextDay()}</span></div>`;
+    // Timer on result screen - white text
+    const timerHTML = `<div id="countdown" style="color:#ffffff !important;">New words in <span id="result-countdown">${getTimeUntilNextDay()}</span></div>`;
     els.scoreText.insertAdjacentHTML('afterend', timerHTML);
 
     els.statsBtn.style.display = "block";
