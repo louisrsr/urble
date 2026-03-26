@@ -70,23 +70,27 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("https://urble.louisrsr.workers.dev/daily");
       gameWords = await res.json();
     } catch (e) {
-      gameWords = [{ word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] }, { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] }, { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] }, { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] }, { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }];
+      gameWords = [
+        { word: "Rizz", correct: "Short for charisma, especially in flirting.", wrong: ["Gaming strategy.", "Energy drink.", "Fashion brand."] },
+        { word: "Mid", correct: "Something average or mediocre.", wrong: ["Extremely good.", "Yoga pose.", "Hairstyle."] },
+        { word: "Sus", correct: "Suspicious or questionable.", wrong: ["Sushi dish.", "Superhero.", "Workout style."] },
+        { word: "Cap", correct: "A lie or falsehood.", wrong: ["Hat.", "Beverage.", "Software term."] },
+        { word: "Flex", correct: "To show off.", wrong: ["Muscle exercise.", "Phone brand.", "Dance move."] }
+      ];
     }
   }
 
   const showSection = (s) => { s.classList.remove("hidden"); setTimeout(() => s.classList.add("visible"), 20); };
-  const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 300); };
+  const hideSection = (s) => { s.classList.remove("visible"); setTimeout(() => s.classList.add("hidden"), 10); };
 
   const closeModal = (modal) => {
     modal.classList.add("closing");
     setTimeout(() => {
       hideSection(modal);
       modal.classList.remove("closing");
-      modal.style.animation = ''; // clean up
-    }, 380);
+    }, 420); // slightly longer delay to prevent flash
   };
 
-  /* Get time until next day with seconds */
   const getTimeUntilNextDay = () => {
     const now = new Date();
     const tomorrow = new Date(now);
@@ -99,16 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
-  /* Update splash and result with timer */
   const updateSplash = () => {
     els.splash.innerHTML = "";
 
     const hasProgress = loadProgress();
 
     if (hasProgress && currentRound < TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
+      els.splash.innerHTML = `<p class="resume-msg">You are on question ${currentRound + 1}/5 — let's finish this!</p>`;
     } else if (hasProgress && currentRound >= TOTAL_ROUNDS) {
-      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>Come back in <span id="splash-countdown">${getTimeUntilNextDay()}</span> for 5 new words</p>`;
+      els.splash.innerHTML = `<p style="color:#e4f53e;font-weight:600;text-align:center;margin-top:40px;font-size:1.15rem;">Game Complete!<br>New words in <span id="splash-countdown">${getTimeUntilNextDay()}</span></p>`;
       showSection(els.result);
       els.resultText.textContent = "Game Complete!";
       els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
@@ -121,10 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateSplash();
 
-  /* Live countdown update every second */
+  // Live countdown
   setInterval(() => {
-    const countdownEls = document.querySelectorAll("#countdown, #splash-countdown");
-    countdownEls.forEach(el => {
+    document.querySelectorAll("#splash-countdown, #result-countdown, #countdown").forEach(el => {
       if (el) el.textContent = getTimeUntilNextDay();
     });
   }, 1000);
@@ -201,10 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
     els.scoreText.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}`;
 
     // Timer on result screen
-    const timerDiv = document.createElement("div");
-    timerDiv.id = "countdown";
-    timerDiv.innerHTML = `Come back in <span id="result-countdown">${getTimeUntilNextDay()}</span> for 5 new words`;
-    els.scoreText.parentNode.appendChild(timerDiv);
+    const timerHTML = `<div id="countdown">New words in <span id="result-countdown">${getTimeUntilNextDay()}</span></div>`;
+    els.scoreText.insertAdjacentHTML('afterend', timerHTML);
 
     els.statsBtn.style.display = "block";
     clearProgress();
@@ -221,7 +221,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStats(stats);
   };
 
-  /* Show Answers - only "Your Answers" */
   els.showAnswersBtn.addEventListener("click", () => {
     let html = `<h2 style="font-family:'Lora',serif;margin-bottom:20px;text-align:center;">Your Answers</h2>`;
 
@@ -272,18 +271,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let grid = `URBLE ${score}/${TOTAL_ROUNDS}\n`;
     gameWords.forEach((_, i) => grid += playerAnswers[i] === gameWords[i].correct ? "🟩" : "🟥");
     grid += `\n\nPlay at https://www.urble.co.uk`;
-    navigator.clipboard.writeText(grid).then(() => alert("Copied!")).catch(() => prompt("Copy:\n\n" + grid));
+    navigator.clipboard.writeText(grid).then(() => alert("Copied to clipboard!")).catch(() => prompt("Copy this:\n\n" + grid));
   });
 
-  /* URBLE title letter animation */
   if (els.titleClickable) {
     const h1 = els.titleClickable.querySelector("h1");
-    if (h1) {
-      h1.innerHTML = h1.textContent.split('').map(letter => `<span>${letter}</span>`).join('');
-    }
+    if (h1) h1.innerHTML = h1.textContent.split('').map(l => `<span>${l}</span>`).join('');
     els.titleClickable.style.cursor = "pointer";
-    els.titleClickable.addEventListener("mouseenter", () => h1.style.color = "#e4f53e");
-    els.titleClickable.addEventListener("mouseleave", () => h1.style.color = "#ffffff");
   }
 
   els.titleClickable?.addEventListener("click", () => {
