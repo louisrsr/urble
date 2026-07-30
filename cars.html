@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cars</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --header: #1f4e78;
+      --text: #e8eef4;
+      --muted: #8b9cb3;
+      --ok: #22c55e;
+      --warn: #eab308;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 3rem;
+      line-height: 1.45;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.75rem;
+      letter-spacing: -0.02em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-header {
+      background: var(--header);
+      padding: 1rem 1.25rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.01em;
+    }
+    .card-photo {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #243044;
+      display: block;
+    }
+    .card-photo-placeholder {
+      width: 100%;
+      height: 180px;
+      background: #243044;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .card-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      flex: 1;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 0.65rem;
+    }
+    .row:last-child { border-bottom: none; padding-bottom: 0; }
+    .label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .value {
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-align: right;
+      word-break: break-word;
+    }
+    .status {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .status.ok { background: rgba(34,197,94,0.18); color: var(--ok); }
+    .status.due { background: rgba(234,179,8,0.18); color: var(--warn); }
+    .status.expired { background: rgba(239,68,68,0.18); color: var(--danger); }
+    .days {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .days.ok { color: var(--ok); }
+    .days.due { color: var(--warn); }
+    .days.expired { color: var(--danger); }
+    .loading, .error {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .error { color: var(--danger); }
+    #gate {
+      max-width: 320px;
+      margin: 15vh auto 0;
+      text-align: center;
+      padding: 2rem;
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    #gate h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    #gate input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #0f1419;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      outline: none;
+    }
+    #gate input:focus {
+      border-color: var(--header);
+    }
+    #gate button {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--header);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #gate button:hover { opacity: 0.9; }
+    #gate .gate-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+    #content { display: none; }
+    @media (max-width: 480px) {
+      body { padding: 1.25rem 0.75rem 2.5rem; }
+      h1 { font-size: 1.4rem; }
+      .card-header { font-size: 1rem; }
+      .card-photo, .card-photo-placeholder { height: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="gate">
+    <h2>Cars</h2>
+    <input type="password" id="passcode" placeholder="Enter passcode" autocomplete="off">
+    <button id="unlock">Unlock</button>
+    <p class="gate-error" id="gateError">Incorrect passcode</p>
+  </div>
+
+  <div id="content">
+    <h1>Cars</h1>
+    <div id="app">
+      <div class="loading">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    // Change this to whatever passcode you want
+    const PASSCODE = "cars2026";
+
+    const SHEET_ID = "1debdyztYLpJK4fC-6mZLaWe_CtBs-OTnHLWSDip_q6o";
+    const vehiclesUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Vehicles`;
+    const policiesUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Policies`;
+
+    function parseCSV(text) {
+      const rows = [];
+      let current = [];
+      let inQuotes = false;
+      let field = "";
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+        if (c === '"' && inQuotes && next === '"') {
+          field += '"';
+          i++;
+        } else if (c === '"') {
+          inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+          current.push(field);
+          field = "";
+        } else if ((c === '\n' || c === '\r') && !inQuotes) {
+          if (field !== "" || current.length) {
+            current.push(field);
+            rows.push(current);
+            current = [];
+            field = "";
+          }
+          if (c === '\r' && next === '\n') i++;
+        } else {
+          field += c;
+        }
+      }
+      if (field !== "" || current.length) {
+        current.push(field);
+        rows.push(current);
+      }
+      return rows;
+    }
+
+    function parseDate(str) {
+      if (!str) return null;
+      const s = String(str).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s.slice(0, 10));
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function daysUntil(date) {
+      if (!date) return null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(date);
+      target.setHours(0, 0, 0, 0);
+      return Math.round((target - today) / 86400000);
+    }
+
+    function formatDate(d) {
+      if (!d) return "TBC";
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      return day + "/" + month + "/" + d.getFullYear();
+    }
+
+    function statusFor(days) {
+      if (days === null) return { cls: "", label: "—" };
+      if (days < 0) return { cls: "expired", label: "EXPIRED" };
+      if (days <= 30) return { cls: "due", label: "DUE SOON" };
+      return { cls: "ok", label: "OK" };
+    }
+
+    function findCol(headerRow, name) {
+      const lower = name.toLowerCase();
+      for (let i = 0; i < headerRow.length; i++) {
+        if ((headerRow[i] || "").trim().toLowerCase() === lower) return i;
+      }
+      return -1;
+    }
+
+    async function load() {
+      const app = document.getElementById("app");
+      try {
+        const [vRes, pRes] = await Promise.all([
+          fetch(vehiclesUrl),
+          fetch(policiesUrl)
+        ]);
+        if (!vRes.ok || !pRes.ok) {
+          throw new Error("Could not load sheet data. Check the Google Sheet is shared as Anyone with the link can view.");
+        }
+        const vText = await vRes.text();
+        const pText = await pRes.text();
+        const vRows = parseCSV(vText);
+        const pRows = parseCSV(pText);
+
+        if (vRows.length < 2) {
+          app.innerHTML = '<div class="error">No vehicle data found.</div>';
+          return;
+        }
+
+        const vh = vRows[0];
+        const col = {
+          name: findCol(vh, "Vehicle"),
+          reg: findCol(vh, "Reg"),
+          mot: findCol(vh, "MOT Expiry"),
+          tax: findCol(vh, "Tax Status"),
+          service: findCol(vh, "Service Status"),
+          mileage: findCol(vh, "Current Mileage"),
+          front: findCol(vh, "Front Tyre Size"),
+          rear: findCol(vh, "Rear Tyre Size"),
+          image: findCol(vh, "Image URL")
+        };
+
+        const vehicles = [];
+        for (let i = 1; i < vRows.length; i++) {
+          const r = vRows[i];
+          const name = (r[col.name] || "").trim();
+          if (!name) continue;
+          vehicles.push({
+            name: name,
+            reg: (r[col.reg] || "").trim(),
+            mot: parseDate(r[col.mot]),
+            tax: (r[col.tax] || "").trim() || "TBC",
+            service: (r[col.service] || "").trim() || "TBC",
+            mileage: (r[col.mileage] || "").trim(),
+            frontTyre: (r[col.front] || "").trim(),
+            rearTyre: (r[col.rear] || "").trim(),
+            image: col.image >= 0 ? (r[col.image] || "").trim() : ""
+          });
+        }
+
+        const ph = pRows[0] || [];
+        const pCol = {
+          reg: findCol(ph, "Reg"),
+          insurer: findCol(ph, "Insurer"),
+          end: findCol(ph, "End")
+        };
+
+        const policyByReg = {};
+        for (let i = 1; i < pRows.length; i++) {
+          const r = pRows[i];
+          const reg = (r[pCol.reg] || "").trim();
+          if (!reg) continue;
+          policyByReg[reg] = {
+            insurer: (r[pCol.insurer] || "").trim() || "TBC",
+            renewal: parseDate(r[pCol.end])
+          };
+        }
+
+        if (vehicles.length === 0) {
+          app.innerHTML = '<div class="error">No vehicle data found.</div>';
+          return;
+        }
+
+        let html = '<div class="grid">';
+        for (const v of vehicles) {
+          const pol = policyByReg[v.reg] || { insurer: "TBC", renewal: null };
+          const days = daysUntil(v.mot);
+          const st = statusFor(days);
+          const tyre = (v.frontTyre || v.rearTyre)
+            ? (v.frontTyre || "—") + " / " + (v.rearTyre || "—")
+            : "—";
+          const mileage = v.mileage ? v.mileage + " miles" : "—";
+
+          let imgSrc = v.image;
+          const driveMatch = imgSrc && imgSrc.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+          if (driveMatch) {
+            imgSrc = 'https://drive.google.com/uc?export=view&id=' + driveMatch[1];
+          }
+          const photoHtml = imgSrc
+            ? '<img class="card-photo" src="' + imgSrc.replace(/"/g, "&quot;") + '" alt="' + v.name + '">'
+            : '<div class="card-photo-placeholder">No photo</div>';
+
+          html += '<article class="card">' +
+            '<div class="card-header">' + v.name + " — " + v.reg + '</div>' +
+            photoHtml +
+            '<div class="card-body">' +
+            '<div class="row"><span class="label">Insurance Renewal</span><span class="value">' + formatDate(pol.renewal) + '</span></div>' +
+            '<div class="row"><span class="label">Insured by</span><span class="value">' + pol.insurer + '</span></div>' +
+            '<div class="row"><span class="label">MOT Expiry</span><span class="value">' + formatDate(v.mot) + '</span></div>' +
+            '<div class="row"><span class="label">Days until MOT</span><span class="value"><span class="days ' + st.cls + '">' + (days === null ? "—" : days) + '</span> <span class="status ' + st.cls + '">' + st.label + '</span></span></div>' +
+            '<div class="row"><span class="label">Tax Status</span><span class="value">' + v.tax + '</span></div>' +
+            '<div class="row"><span class="label">Service Status</span><span class="value">' + v.service + '</span></div>' +
+            '<div class="row"><span class="label">Mileage</span><span class="value">' + mileage + '</span></div>' +
+            '<div class="row"><span class="label">Front / Rear Tyres</span><span class="value">' + tyre + '</span></div>' +
+            '</div></article>';
+        }
+        html += "</div>";
+        app.innerHTML = html;
+      } catch (err) {
+        app.innerHTML = '<div class="error">' + err.message + '</div>';
+        console.error(err);
+      }
+    }
+
+    function unlock() {
+      const input = document.getElementById("passcode");
+      const err = document.getElementById("gateError");
+      if (input.value === PASSCODE) {
+        sessionStorage.setItem("cars_unlocked", "1");
+        document.getElementById("gate").style.display = "none";
+        document.getElementById("content").style.display = "block";
+        load();
+        setInterval(load, 10 * 60 * 1000);
+      } else {
+        err.style.display = "block";
+        input.value = "";
+        input.focus();
+      }
+    }
+
+    document.getElementById("unlock").addEventListener("click", unlock);
+    document.getElementById("passcode").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") unlock();
+    });
+
+    if (sessionStorage.getItem("cars_unlocked") === "1") {
+      document.getElementById("gate").style.display = "none";
+      document.getElementById("content").style.display = "block";
+      load();
+      setInterval(load, 10 * 60 * 1000);
+    } else {
+      document.getElementById("passcode").focus();
+    }
+  </script>
+</body>
+</html>
